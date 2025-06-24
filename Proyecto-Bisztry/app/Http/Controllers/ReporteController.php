@@ -4,101 +4,83 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Pedido;
-use App\Models\VarianteProd;
+use App\Models\Categoria;
+use App\Models\MetodoPago;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ReporteController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $mesActual = date('m');
-        $anioActual = date('Y');
-        $mesAnterior = date('m', strtotime('-1 month'));
-        $anioAnterior = date('Y', strtotime('-1 month'));
+        // --- 1. CONFIGURACIÓN DE FECHAS (CON FILTROS) ---
+        $periodo = $request->input('periodo', 'mes_actual'); // 'mes_actual' por defecto
+        
+        switch ($periodo) {
+            case 'ultimos_30_dias':
+                $fechaInicio = Carbon::now()->subDays(30);
+                $fechaFin = Carbon::now();
+                break;
+            case 'este_anio':
+                $fechaInicio = Carbon::now()->startOfYear();
+                $fechaFin = Carbon::now()->endOfYear();
+                break;
+            case 'mes_actual':
+            default:
+                $fechaInicio = Carbon::now()->startOfMonth();
+                $fechaFin = Carbon::now()->endOfMonth();
+                break;
+        }
 
-        // Ventas actuales
-        $ventasActual = Pedido::where('esta_cod', 'ENT')
-            ->whereMonth('pedi_fecha', $mesActual)
-            ->whereYear('pedi_fecha', $anioActual)
-            ->sum('pedi_total');
+        // --- 2. CONSULTA BASE (PARA NO REPETIR CÓDIGO) ---
+        $pedidosCompletadosQuery = Pedido::where('esta_cod', 'ENT')
+                                        ->whereBetween('pedi_fecha', [$fechaInicio, $fechaFin]);
 
-        $ventasPasadas = Pedido::where('esta_cod', 'ENT')
-            ->whereMonth('pedi_fecha', $mesAnterior)
-            ->whereYear('pedi_fecha', $anioAnterior)
-            ->sum('pedi_total');
+        // --- 3. CÁLCULO DE KPIS PRINCIPALES ---
+        $kpis = [
+            'ventasTotales' => (float) (clone $pedidosCompletadosQuery)->sum('pedi_total'),
+            'pedidosCompletados' => (clone $pedidosCompletadosQuery)->count(),
+        ];
+        $kpis['ticketPromedio'] = ($kpis['pedidosCompletados'] > 0) ? $kpis['ventasTotales'] / $kpis['pedidosCompletados'] : 0;
 
-        $variacionVentas = $ventasPasadas > 0 ? (($ventasActual - $ventasPasadas) / $ventasPasadas) * 100 : 0;
-
-        // Ticket Promedio
-        $totalPedidosMesActual = Pedido::where('esta_cod', 'ENT')
-            ->whereMonth('pedi_fecha', $mesActual)
-            ->whereYear('pedi_fecha', $anioActual)
-            ->count();
-
-        $ticketPromedio = $totalPedidosMesActual > 0 ? $ventasActual / $totalPedidosMesActual : 0;
-
-        $totalPedidosMesAnterior = Pedido::where('esta_cod', 'ENT')
-            ->whereMonth('pedi_fecha', $mesAnterior)
-            ->whereYear('pedi_fecha', $anioAnterior)
-            ->count();
-
-        $ventasMesAnterior = Pedido::where('esta_cod', 'ENT')
-            ->whereMonth('pedi_fecha', $mesAnterior)
-            ->whereYear('pedi_fecha', $anioAnterior)
-            ->sum('pedi_total');
-
-        $ticketPromedioAnterior = $totalPedidosMesAnterior > 0 ? $ventasMesAnterior / $totalPedidosMesAnterior : 0;
-        $variacionTicket = $ticketPromedioAnterior > 0 ? (($ticketPromedio - $ticketPromedioAnterior) / $ticketPromedioAnterior) * 100 : 0;
-
-        // Tasa de conversión
-        $intentosCompra = 11200;
-        $intentosCompraAnterior = 10000;
-
-        $tasaConversion = $intentosCompra > 0 ? ($totalPedidosMesActual / $intentosCompra) * 100 : 0;
-        $tasaConversionAnterior = $intentosCompraAnterior > 0 ? ($totalPedidosMesAnterior / $intentosCompraAnterior) * 100 : 0;
-
-        $variacionConversion = $tasaConversionAnterior > 0 ? (($tasaConversion - $tasaConversionAnterior) / $tasaConversionAnterior) * 100 : 0;
-
-        // Pedidos completados
-        $pedidosCompletados = $totalPedidosMesActual;
-        $variacionPedidos = $totalPedidosMesAnterior > 0 ? (($pedidosCompletados - $totalPedidosMesAnterior) / $totalPedidosMesAnterior) * 100 : 0;
-
-        // Stats adicionales
-        $stats = [
-            'pedidos_mes' => $totalPedidosMesActual,
-            'clientes_activos' => DB::table('clientes')->count(),
-            'ingresos_totales' => Pedido::where('esta_cod', 'ENT')->sum('pedi_total'),
-            'bajo_stock' => VarianteProd::whereColumn('var_stok_actual', '<=', 'var_stock_min')->count(),
+        // --- 4. DATOS PARA GRÁFICO PRINCIPAL (VENTAS DIARIAS/MENSUALES) ---
+        $formatoFecha = ($periodo === 'este_anio') ? '%Y-%m' : '%Y-%m-%d';
+        $labelFormato = ($periodo === 'este_anio') ? 'M' : 'd M';
+        
+        $ventasAgrupadas = (clone $pedidosCompletadosQuery)
+            ->select(
+                DB::raw("to_char(pedi_fecha, '$formatoFecha') as fecha_agrupada"),
+                DB::raw('SUM(pedi_total) as total')
+            )
+            ->groupBy('fecha_agrupada')
+            ->orderBy('fecha_agrupada', 'asc')
+            ->get();
+        
+        $graficoPrincipal = [
+            'labels' => $ventasAgrupadas->map(fn($item) => Carbon::parse($item->fecha_agrupada)->format($labelFormato)),
+            'valores' => $ventasAgrupadas->pluck('total')
         ];
 
-        // Reportes de ventas mensuales (últimos 12 meses)
-        $ventasMensuales = Pedido::selectRaw("TO_CHAR(pedi_fecha, 'Mon') as mes")
-            ->selectRaw("SUM(pedi_total) as total")
-            ->where('esta_cod', 'ENT')
-            ->groupByRaw("TO_CHAR(pedi_fecha, 'Mon'), EXTRACT(MONTH FROM pedi_fecha)")
-            ->orderByRaw("EXTRACT(MONTH FROM pedi_fecha)")
-            ->limit(12)
+        // --- 5. DATOS PARA GRÁFICOS SECUNDARIOS ---
+        $ventasPorCategoria = Categoria::select('categorias.cate_detalle')
+            ->join('productos', 'categorias.cate_id', '=', 'productos.cate_id')
+            ->join('variantes_prod', 'productos.prod_cod', '=', 'variantes_prod.prod_cod')
+            ->join('detalles_pedidos', 'variantes_prod.var_id', '=', 'detalles_pedidos.var_id')
+            ->join('pedidos', 'detalles_pedidos.pedi_id', '=', 'pedidos.pedi_id')
+            ->where('pedidos.esta_cod', 'ENT')
+            ->whereBetween('pedidos.pedi_fecha', [$fechaInicio, $fechaFin])
+            ->select('categorias.cate_detalle', DB::raw('SUM(detalles_pedidos.cantidad * variantes_prod.var_precio) as total'))
+            ->groupBy('categorias.cate_detalle')
+            ->orderBy('total', 'desc')
             ->get();
 
-        $labels = $ventasMensuales->pluck('mes');
-        $valores = $ventasMensuales->pluck('total');
-
-        // Productos con bajo stock
-        $productosBajoStock = VarianteProd::whereColumn('var_stok_actual', '<=', 'var_stock_min')->get();
-
-        return view('reportes.index', [
-            'ventasTotales' => $ventasActual,
-            'variacionVentas' => $variacionVentas,
-            'ticketPromedio' => $ticketPromedio,
-            'variacionTicket' => $variacionTicket,
-            'tasaConversion' => $tasaConversion,
-            'variacionConversion' => $variacionConversion,
-            'pedidosCompletados' => $pedidosCompletados,
-            'variacionPedidos' => $variacionPedidos,
-            'stats' => $stats,
-            'productosBajoStock' => $productosBajoStock,
-            'labels' => $labels,
-            'valores' => $valores
-        ]);
+        $ventasPorMetodoPago = MetodoPago::join('pedidos', 'metodos_pago.meto_cod', '=', 'pedidos.meto_cod')
+            ->where('pedidos.esta_cod', 'ENT')
+            ->whereBetween('pedidos.pedi_fecha', [$fechaInicio, $fechaFin])
+            ->select('metodos_pago.medo_detale', DB::raw('COUNT(pedidos.pedi_id) as cantidad'))
+            ->groupBy('metodos_pago.medo_detale')
+            ->get();
+            
+        return view('reportes.index', compact('kpis', 'graficoPrincipal', 'ventasPorCategoria', 'ventasPorMetodoPago', 'periodo'));
     }
 }
