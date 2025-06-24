@@ -22,9 +22,18 @@ class Proveedor extends Model
         'prov_email',
     ];
 
+    /**
+     * ESTA FUNCIÓN ES LA SOLUCIÓN CLAVE A LOS ERRORES ANTERIORES.
+     * Le dice a Laravel que use 'prov_ruc' para buscar en la URL en lugar de 'id'.
+     */
+    public function getRouteKeyName()
+    {
+        return 'prov_ruc';
+    }
+
     // Relación: Un Proveedor puede tener muchas Compras
     public function compras()
     {
-        return $this->hasMany(Compra::class, 'prov_ruc');
+        return $this->hasMany(Compra::class, 'prov_ruc', 'prov_ruc');
     }
 }

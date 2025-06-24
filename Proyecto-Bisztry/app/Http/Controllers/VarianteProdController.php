@@ -2,83 +2,82 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\VarianteProd;
+use App\Models\Producto;
+use App\Models\Talla;
+use App\Models\Color;
 use Illuminate\Http\Request;
 
 class VarianteProdController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * Muestra el formulario para crear una nueva variante para un producto específico.
      */
-    public function index()
+    public function create(Producto $producto)
     {
-        //
+        $tallas = Talla::all();
+        $colores = Color::all();
+        return view('variantes.create', compact('producto', 'tallas', 'colores'));
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
+     * Guarda la nueva variante en la base de datos.
      */
-    public function create()
+    public function store(Request $request, Producto $producto)
     {
-        //
+        $request->validate([
+            'talla_cod' => 'required|exists:tallas,talla_cod',
+            'color_id' => 'required|exists:colores,color_id',
+            'sku' => 'nullable|string|max:25|unique:variantes_prod,sku',
+            'var_stok_actual' => 'required|integer|min:0',
+            'var_stock_min' => 'required|integer|min:0',
+            'var_precio' => 'required|numeric|min:0',
+        ]);
+
+        $producto->variantes()->create($request->all());
+
+        return redirect()->route('productos.show', $producto)->with('success', 'Variante creada exitosamente.');
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * Muestra el formulario para editar una variante existente.
      */
-    public function store(Request $request)
+    public function edit(VarianteProd $variante)
     {
-        //
+        $tallas = Talla::all();
+        $colores = Color::all();
+        // Cargamos la relación 'producto' para poder usarla en la vista
+        $variante->load('producto'); 
+        return view('variantes.edit', compact('variante', 'tallas', 'colores'));
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Actualiza la variante en la base de datos.
      */
-    public function show($id)
+    public function update(Request $request, VarianteProd $variante)
     {
-        //
+        $request->validate([
+            'talla_cod' => 'required|exists:tallas,talla_cod',
+            'color_id' => 'required|exists:colores,color_id',
+            'sku' => 'nullable|string|max:25|unique:variantes_prod,sku,' . $variante->var_id . ',var_id',
+            'var_stok_actual' => 'required|integer|min:0',
+            'var_stock_min' => 'required|integer|min:0',
+            'var_precio' => 'required|numeric|min:0',
+        ]);
+
+        $variante->update($request->all());
+        
+        // Usamos la relación para volver a la página del producto padre
+        return redirect()->route('productos.show', $variante->producto)->with('success', 'Variante actualizada exitosamente.');
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Elimina una variante de la base de datos.
      */
-    public function edit($id)
+    public function destroy(VarianteProd $variante)
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+        $producto = $variante->producto; // Guardamos el producto padre antes de borrar
+        $variante->delete();
+        return redirect()->route('productos.show', $producto)->with('success', 'Variante eliminada exitosamente.');
     }
 }

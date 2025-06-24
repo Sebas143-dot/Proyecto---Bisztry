@@ -22,8 +22,9 @@
     <div class="card-header">
         <h3>Variantes de Inventario (SKUs)</h3>
         <div class="card-actions">
-            {{-- El siguiente paso sería crear el CRUD para Variantes --}}
-            <button class="btn btn-primary"><i class="fas fa-plus"></i> Nueva Variante</button>
+            <a href="{{ route('productos.variantes.create', $producto) }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nueva Variante
+            </a>
         </div>
     </div>
     <div class="card-body">
@@ -48,15 +49,26 @@
                         <td>{{ $variante->talla->tall_detalle ?? 'N/A' }}</td>
                         <td>${{ number_format($variante->var_precio, 2) }}</td>
                         <td>
-                            @if($variante->var_stok_actual <= $variante->var_stock_min)
-                                <span style="color:red; font-weight:bold;">{{ $variante->var_stok_actual }}</span>
+                            @if($variante->var_stok_actual <= $variante->var_stock_min && $variante->var_stok_actual > 0)
+                                <span style="color: #f59e0b; font-weight:bold;">{{ $variante->var_stok_actual }} (Bajo)</span>
+                            @elseif($variante->var_stok_actual == 0)
+                                <span style="color: #ef4444; font-weight:bold;">{{ $variante->var_stok_actual }} (Agotado)</span>
                             @else
                                 {{ $variante->var_stok_actual }}
                             @endif
                         </td>
                         <td>{{ $variante->var_stock_min }}</td>
                         <td class="text-right">
-                             <button class="btn-icon warning" title="Editar Variante"><i class="fas fa-edit"></i></button>
+                             <div class="actions-buttons">
+                                <a href="{{ route('variantes.edit', $variante) }}" class="btn-icon warning" title="Editar Variante">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ route('variantes.destroy', $variante) }}" method="POST" onsubmit="return confirm('¿Seguro que quieres eliminar esta variante?');" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-icon danger" title="Eliminar Variante"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     @empty
@@ -71,6 +83,8 @@
 </div>
 <style>
 .actions-buttons { display: flex; justify-content: flex-end; gap: 0.5rem; }
-.btn-icon.warning { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; color: white; border: none; cursor: pointer; background-color: #f59e0b; }
+.btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; color: white; border: none; cursor: pointer;}
+.btn-icon.warning { background-color: #f59e0b; }
+.btn-icon.danger { background-color: #ef4444; }
 </style>
 @endsection

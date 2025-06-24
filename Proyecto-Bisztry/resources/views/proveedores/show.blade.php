@@ -2,12 +2,12 @@
 
 @section('title', 'Detalle del Proveedor')
 @section('page-title', 'Detalle del Proveedor')
-@section('page-description', $proveedor->prov_nombre)
+@section('page-description', $proveedor->prov_nombre ?? 'Información del Proveedor')
 
 @section('content')
 <div class="card">
     <div class="card-header">
-        <h3>{{ $proveedor->prov_nombre }}</h3>
+        <h3>{{ $proveedor->prov_nombre ?? 'Proveedor no encontrado' }}</h3>
         <div class="card-actions">
             <a href="{{ route('proveedores.edit', $proveedor) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Editar</a>
             <a href="{{ route('proveedores.index') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Volver</a>
@@ -25,21 +25,12 @@
 </div>
 
 <div class="card" style="margin-top: 2rem;">
-    <div class="card-header">
-        <h3>Historial de Compras</h3>
-    </div>
+    <div class="card-header"><h3>Historial de Compras a este Proveedor</h3></div>
     <div class="card-body">
          @if($proveedor->compras && $proveedor->compras->count() > 0)
             <div class="table-responsive">
                 <table class="table">
-                    <thead>
-                        <tr>
-                            <th>ID Compra</th>
-                            <th>Nº Factura</th>
-                            <th>Fecha</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>ID Compra</th><th>Nº Factura</th><th>Fecha</th><th>Total</th></tr></thead>
                     <tbody>
                         @foreach($proveedor->compras as $compra)
                         <tr>
@@ -54,18 +45,16 @@
             </div>
          @else
             <div class="empty-state">
-                <i class="fas fa-file-invoice-dollar"></i>
-                <h3>Sin Compras</h3>
+                <i class="fas fa-file-invoice-dollar"></i><h3>Sin Compras</h3>
                 <p>Este proveedor aún no tiene compras registradas en el sistema.</p>
             </div>
          @endif
     </div>
 </div>
-
 <style>
 .details-list { list-style: none; padding: 0; }
-.details-list li { padding: 0.75rem 0; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center;}
-.details-list li strong { width: 200px; color: #6b7280; }
+.details-list li { padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); display: flex; align-items: center;}
+.details-list li strong { width: 200px; color: var(--text-secondary); }
 .details-list li:last-child { border-bottom: none; }
 </style>
 @endsection

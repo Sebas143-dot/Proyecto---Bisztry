@@ -6,20 +6,8 @@
 
 @section('content')
 <div class="card">
-    <div class="card-header">
-        <h3>Formulario de Edición</h3>
-    </div>
+    <div class="card-header"><h3>Formulario de Edición</h3></div>
     <div class="card-body">
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
         <form action="{{ route('proveedores.update', $proveedor) }}" method="POST">
             @csrf
             @method('PUT')
@@ -31,6 +19,7 @@
                 <div class="form-group">
                     <label for="prov_nombre">Nombre del Proveedor *</label>
                     <input type="text" id="prov_nombre" name="prov_nombre" value="{{ old('prov_nombre', $proveedor->prov_nombre) }}" required>
+                    @error('prov_nombre')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
                 <div class="form-group">
                     <label for="prov_contacto">Nombre del Contacto</label>
@@ -43,6 +32,7 @@
                 <div class="form-group full-width">
                     <label for="prov_email">Email</label>
                     <input type="email" id="prov_email" name="prov_email" value="{{ old('prov_email', $proveedor->prov_email) }}">
+                    @error('prov_email')<span class="text-danger">{{ $message }}</span>@enderror
                 </div>
             </div>
             <div class="form-actions">
@@ -53,11 +43,9 @@
     </div>
 </div>
 <style>
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
-.form-group { display: flex; flex-direction: column; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+.form-group { margin-bottom: 1rem; display: flex; flex-direction: column; }
 .form-group.full-width { grid-column: 1 / -1; }
-.form-group label { margin-bottom: 0.5rem; font-weight: 600; }
-.form-group input { padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; }
-.form-actions { display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid #e5e7eb; padding-top: 1.5rem; margin-top: 1.5rem; }
+.form-group .text-danger { font-size: 0.75rem; color: var(--danger-color); margin-top: 0.25rem; }
 </style>
 @endsection

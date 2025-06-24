@@ -26,6 +26,16 @@ class ProductoController extends Controller
         Producto::create($request->all());
         return redirect()->route('productos.index')->with('success', 'Producto creado.');
     }
+    public function show(Producto $producto)
+    {
+        // Cargamos las relaciones para poder usarlas en la vista de detalles.
+        // Esto es muy eficiente porque pre-carga toda la información necesaria en una sola consulta.
+        // Le decimos: "Trae este producto, su categoría, y todas sus variantes. De cada variante, trae también su talla y su color."
+        $producto->load('categoria', 'variantes.talla', 'variantes.color');
+        
+        // Devolvemos la vista 'productos.show' y le pasamos el producto con toda su información.
+        return view('productos.show', compact('producto'));
+    }
 
     public function edit(Producto $producto)
     {
