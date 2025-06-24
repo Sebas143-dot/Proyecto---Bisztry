@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,11 +13,28 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // \App\Models\User::factory(10)->create();
+        // El orden es CRÍTICO para que las claves foráneas se creen correctamente.
+        // Primero se llenan las tablas que no dependen de ninguna otra.
+        $this->call([
+            // --- CATÁLOGOS SIN DEPENDENCIAS ---
+            ProvinciaSeeder::class,
+            CategoriaSeeder::class,
+            TallaSeeder::class,
+            ColorSeeder::class,
+            EstadoPedidoSeeder::class,
+            MetodoPagoSeeder::class,
+            ServicioEntregaSeeder::class,
+            ProveedorSeeder::class,
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+            // --- CATÁLOGOS CON DEPENDENCIAS ---
+            // CiudadSeeder necesita que la tabla 'provincias' ya tenga datos.
+            CiudadSeeder::class,
+
+            // --- (Opcional) DATOS DE PRUEBA ---
+            // Si en el futuro creas seeders para generar datos falsos de clientes o productos,
+            // los llamarías aquí, al final de todo. Por ejemplo:
+            // ClienteSeeder::class,
+            // ProductoSeeder::class,
+        ]);
     }
 }
