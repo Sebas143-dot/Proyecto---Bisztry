@@ -22,7 +22,6 @@ use App\Http\Controllers\UserController;
 */
 
 // Carga las rutas de autenticación (login, registro, logout, etc.)
-// Es buena práctica tenerlo al principio para que se registren primero.
 require __DIR__.'/auth.php';
 
 
@@ -37,7 +36,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // --- RUTAS DE NUESTRA APLICACIÓN ---
+    // --- RUTAS DE NUESTRA APLICACIÓN (Accesibles para cualquier usuario logueado) ---
     Route::resource('clientes', ClienteController::class);
     Route::resource('proveedores', ProveedorController::class);
     Route::resource('productos', ProductoController::class);
@@ -46,18 +45,18 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('pedidos', PedidoController::class);
     Route::resource('reportes', ReporteController::class)->only(['index']);
     
-    // =======================================================
-    // --- INICIO DE LA MEJORA DE SEGURIDAD ---
-    // =======================================================
-    // Agrupamos las rutas de administración y les aplicamos nuestro middleware 'role.superadmin'.
-    // Ahora, solo los usuarios con el rol 'Super-Admin' podrán acceder a estas URLs.
-    // Cualquier otro usuario recibirá un error 403 (Acceso Prohibido).
-    Route::middleware(['role.superadmin'])->group(function () {
+    // ===================================================================
+    // ---          RUTAS PROTEGIDAS PARA SUPER-ADMINISTRADOR          ---
+    // ===================================================================
+    // Todas las rutas dentro de este grupo solo serán accesibles para
+    // usuarios que pasen la verificación del middleware 'role:superadmin'.
+    Route::middleware('role:superadmin')->group(function () {
+        
+        // Aquí agrupamos todas las rutas que solo el Super Admin puede ver.
         Route::resource('roles', RoleController::class)->except(['show']);
         Route::resource('users', UserController::class)->except(['show']);
-    });
-    // =======================================================
-    // --- FIN DE LA MEJORA DE SEGURIDAD ---
-    // =======================================================
-});
 
+    });
+    // ===================================================================
+    
+});
