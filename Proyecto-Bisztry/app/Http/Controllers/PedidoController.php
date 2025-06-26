@@ -10,204 +10,151 @@ use App\Models\MetodoPago;
 use App\Models\ServicioEntrega;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class PedidoController extends Controller
 {
-    /**
-     * Muestra una lista paginada de todos los pedidos.
-     */
-public function index(Request $request)
-    {
-        // Obtenemos todos los estados para el desplegable de filtro
+    public function index(Request $request) {
         $estados = EstadoPedido::all();
-
-        // Empezamos la consulta a la base de datos
         $query = Pedido::with('cliente', 'estado')->latest('pedi_fecha');
-
-        // Si se envió un filtro de estado, lo aplicamos
         if ($request->filled('estado_filtro') && $request->estado_filtro != 'todos') {
             $query->where('esta_cod', $request->estado_filtro);
         }
-
-        // Si se envió un término de búsqueda, lo aplicamos
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function($q) use ($search) {
                 $q->where('pedi_id', 'like', "%{$search}%")
-                  ->orWhereHas('cliente', function($clienteQuery) use ($search) {
-                      $clienteQuery->where('clie_nombre', 'like', "%{$search}%")
-                                   ->orWhere('clie_apellido', 'like', "%{$search}%");
-                  });
+                  ->orWhereHas('cliente', fn($clienteQuery) => $clienteQuery->where('clie_nombre', 'like', "%{$search}%"));
             });
         }
-        
         $pedidos = $query->paginate(15);
-
-        // Devolvemos la vista con los pedidos y también los estados para el filtro
         return view('pedidos.index', compact('pedidos', 'estados'));
     }
 
-    /**
-     * Muestra el formulario para crear un nuevo pedido.
-     * Reúne todos los datos necesarios para los desplegables del formulario.
-     */
-    public function create()
-    {
-        $clientes = Cliente::orderBy('clie_apellido')->get();
-        $metodosPago = MetodoPago::all();
-        $serviciosEntrega = ServicioEntrega::all();
-        $estados = EstadoPedido::all();
-
-        // -- INICIO DE LA MEJORA --
-        // Obtenemos solo las variantes que tienen stock
-        $variantesConStock = VarianteProd::with('producto', 'talla', 'color')
-            ->where('var_stok_actual', '>', 0)
-            ->get();
-        
-        // Pre-formateamos los datos para Select2 aquí en el backend, que es más seguro.
-        $variantesParaSelect2 = $variantesConStock->map(function ($variante) {
-            // Creamos el texto que se mostrará en el desplegable
-            $texto = sprintf(
-                '%s (Talla: %s, Color: %s) | Stock: %d | SKU: %s',
-                $variante->producto->prod_nombre ?? 'Producto sin nombre',
-                $variante->talla->tall_detalle ?? 'N/A',
-                $variante->color->col_detalle ?? 'N/A',
-                $variante->var_stok_actual,
-                $variante->sku ?? 'N/A'
-            );
-            
-            // Devolvemos un array con el formato que Select2 y nuestro JS necesitan
-            return [
-                'id' => $variante->var_id,
-                'text' => $texto,
-                'datos_completos' => [ // Incluimos los datos necesarios para el carrito
-                    'var_id' => $variante->var_id,
-                    'nombre' => sprintf('%s (%s, %s)', $variante->producto->prod_nombre, $variante->talla->tall_detalle, $variante->color->col_detalle),
-                    'precio' => (float) $variante->var_precio,
-                    'stock_max' => (int) $variante->var_stok_actual,
-                ]
-            ];
-        });
-        // -- FIN DE LA MEJORA --
-
-        // Pasamos la nueva variable '$variantesParaSelect2' a la vista
-        return view('pedidos.create', compact('clientes', 'variantesParaSelect2', 'metodosPago', 'serviciosEntrega', 'estados'));
+    public function createStep1() {
+        session()->forget('pedido');
+        $clientes = Cliente::orderBy('clie_nombre')->get();
+        return view('pedidos.create-step-1', compact('clientes'));
     }
 
-    /**
-     * Valida y guarda un nuevo pedido en la base de datos usando una transacción.
-     */
-    public function store(Request $request)
-    {
-        // 1. Validación inicial de los datos principales del pedido
-        $request->validate([
-            'clie_id' => 'required|exists:clientes,clie_id',
-            'pedi_fecha' => 'required|date',
-            'esta_cod' => 'required|exists:estados_pedidos,esta_cod',
-            'meto_cod' => 'required|exists:metodos_pago,meto_cod',
-            'serv_id' => 'required|exists:servicios_entrega,serv_id',
-            'pedi_costo_envio' => 'required|numeric|min:0',
-            'carrito' => 'required|array|min:1',
-            // Validación de cada item dentro del carrito
-            'carrito.*.var_id' => 'required|exists:variantes_prod,var_id',
-            'carrito.*.cantidad' => 'required|integer|min:1',
-            'carrito.*.precio' => 'required|numeric|min:0',
-        ]);
+    public function postStep1(Request $request) {
+        $validated = $request->validate(['clie_id' => 'required|exists:clientes,clie_id']);
+        session(['pedido.cliente_id' => $validated['clie_id'], 'pedido.carrito' => []]);
+        return redirect()->route('pedidos.create.step2');
+    }
 
-        // 2. Transacción de Base de Datos: La "Caja de Seguridad"
+    public function createStep2() {
+        if (!session()->has('pedido.cliente_id')) { return redirect()->route('pedidos.create.step1'); }
+        $variantes = VarianteProd::with('producto', 'talla', 'color')->where('var_stok_actual', '>', 0)->get();
+        $carrito = session('pedido.carrito', []);
+        return view('pedidos.create-step-2', compact('variantes', 'carrito'));
+    }
+
+    public function addToCart(Request $request) {
+        $request->validate(['variante_id' => 'required|exists:variantes_prod,var_id', 'cantidad' => 'required|integer|min:1']);
+        $variante = VarianteProd::find($request->variante_id);
+        if ($request->cantidad > $variante->var_stok_actual) { return back()->with('error', 'No hay suficiente stock.'); }
+        $carrito = session('pedido.carrito', []);
+        $carrito[$request->variante_id] = [
+            'nombre' => sprintf('%s (%s, %s)', $variante->producto->prod_nombre, $variante->talla->tall_detalle, $variante->color->col_detalle),
+            'cantidad' => (int)$request->cantidad, 'precio' => (float)$variante->var_precio,
+            'subtotal' => (int)$request->cantidad * (float)$variante->var_precio
+        ];
+        session(['pedido.carrito' => $carrito]);
+        return back()->with('success', 'Producto añadido/actualizado.');
+    }
+
+    public function removeFromCart(Request $request) {
+        $request->validate(['variante_id' => 'required']);
+        $carrito = session('pedido.carrito', []);
+        unset($carrito[$request->variante_id]);
+        session(['pedido.carrito' => $carrito]);
+        return back()->with('success', 'Producto eliminado.');
+    }
+
+    public function createStep3() {
+        $pedidoSession = session('pedido');
+        if (empty($pedidoSession) || empty($pedidoSession['carrito'])) { return redirect()->route('pedidos.create.step2')->with('error', 'Tu carrito está vacío.'); }
+        $cliente = Cliente::find($pedidoSession['cliente_id']);
+        $metodosPago = MetodoPago::all(); $serviciosEntrega = ServicioEntrega::all(); $estados = EstadoPedido::all();
+        return view('pedidos.create-step-3', compact('cliente', 'pedidoSession', 'metodosPago', 'serviciosEntrega', 'estados'));
+    }
+
+    public function store(Request $request) {
+        $pedidoSession = session('pedido');
+        if (empty($pedidoSession)) { return redirect()->route('pedidos.create.step1'); }
+        $validated = $request->validate(['pedi_fecha' => 'required|date', 'esta_cod' => 'required|exists:estados_pedidos,esta_cod', 'meto_cod' => 'required|exists:metodos_pago,meto_cod', 'serv_id' => 'required|exists:servicios_entrega,serv_id', 'pedi_costo_envio' => 'required|numeric|min:0']);
         try {
-            DB::transaction(function () use ($request) {
-                // Calculamos el total del pedido
-                $totalPedido = 0;
-                foreach ($request->carrito as $item) {
-                    $totalPedido += $item['cantidad'] * $item['precio'];
-                }
-
-                // 3. Creación del Pedido principal
-                $pedido = Pedido::create([
-                    'clie_id' => $request->clie_id,
-                    'pedi_fecha' => $request->pedi_fecha,
-                    'esta_cod' => $request->esta_cod,
-                    'meto_cod' => $request->meto_cod,
-                    'serv_id' => $request->serv_id,
-                    'pedi_direccion' => $request->pedi_direccion,
-                    'pedi_costo_envio' => $request->pedi_costo_envio,
-                    'pedi_total' => $totalPedido,
-                ]);
-
-                // 4. Creación de los Detalles del Pedido y actualización de Stock
-                foreach ($request->carrito as $item) {
-                    // Se crea el detalle del pedido
-                    $pedido->detalles()->create([
-                        'var_id' => $item['var_id'],
-                        'cantidad' => $item['cantidad'],
-                        // El precio se podría guardar aquí también si quisieras un histórico
-                    ]);
-                    
-                    // Se descuenta el stock
-                    $variante = VarianteProd::find($item['var_id']);
-                    if ($variante->var_stok_actual < $item['cantidad']) {
-                        // Si el stock cambió mientras hacíamos el pedido, lanzamos un error y la transacción se revierte.
-                        throw new \Exception('Stock insuficiente para el producto SKU: ' . $variante->sku);
-                    }
+            DB::transaction(function () use ($validated, $pedidoSession, $request) {
+                $totalPedido = array_reduce($pedidoSession['carrito'], fn($sum, $item) => $sum + $item['subtotal'], 0);
+                $pedido = Pedido::create(array_merge($validated, ['clie_id' => $pedidoSession['cliente_id'], 'pedi_direccion' => $request->pedi_direccion, 'pedi_total' => $totalPedido, 'pedi_costo_envio' => $validated['pedi_costo_envio']]));
+                foreach ($pedidoSession['carrito'] as $var_id => $item) {
+                    $variante = VarianteProd::find($var_id);
+                    if ($variante->var_stok_actual < $item['cantidad']) { throw new \Exception('Stock insuficiente para ' . $variante->sku); }
+                    $pedido->detalles()->create(['var_id' => $var_id, 'cantidad' => $item['cantidad']]);
                     $variante->decrement('var_stok_actual', $item['cantidad']);
                 }
             });
-        } catch (\Exception $e) {
-            // Si algo falla, la transacción se revierte y mostramos un error.
-            return back()->with('error', 'Error al crear el pedido: ' . $e->getMessage())->withInput();
-        }
-        
-        return redirect()->route('pedidos.index')->with('success', '¡Pedido creado exitosamente!');
+        } catch (\Exception $e) { return back()->with('error', 'Error: ' . $e->getMessage()); }
+        session()->forget('pedido');
+        return redirect()->route('pedidos.index')->with('success', '¡Pedido creado!');
     }
 
-    /**
-     * Muestra los detalles completos de un pedido específico.
-     */
-    public function show(Pedido $pedido)
-    {
-        // Carga todas las relaciones para mostrar una vista completa y detallada
+    public function show(Pedido $pedido) {
         $pedido->load('cliente.ciudad', 'estado', 'metodoPago', 'servicioEntrega', 'detalles.variante.producto', 'detalles.variante.talla', 'detalles.variante.color');
         return view('pedidos.show', compact('pedido'));
     }
 
     /**
-     * Muestra el formulario para editar el estado o datos de un pedido.
+     * Muestra el formulario para editar un pedido completo.
      */
     public function edit(Pedido $pedido)
     {
+        $pedido->load('cliente', 'detalles.variante.producto', 'detalles.variante.talla', 'detalles.variante.color');
         $estados = EstadoPedido::all();
-        // Carga el cliente para mostrar su nombre
-        $pedido->load('cliente');
-        return view('pedidos.edit', compact('pedido', 'estados'));
+        $variantesParaSelect2 = VarianteProd::with('producto', 'talla', 'color')->get()
+            ->map(function ($variante) {
+                $texto = sprintf('%s (Talla: %s, Color: %s) | Stock: %d', $variante->producto->prod_nombre, $variante->talla->tall_detalle, $variante->color->col_detalle, $variante->var_stok_actual);
+                return ['id' => $variante->var_id, 'text' => $texto, 'datos_completos' => ['var_id' => $variante->var_id, 'nombre' => sprintf('%s (%s, %s)', $variante->producto->prod_nombre, $variante->talla->tall_detalle, $variante->color->col_detalle), 'precio' => (float)$variante->var_precio, 'stock_max' => (int)$variante->var_stok_actual]];
+            });
+        return view('pedidos.edit', compact('pedido', 'estados', 'variantesParaSelect2'));
     }
 
     /**
-     * Actualiza los datos de un pedido (principalmente su estado).
+     * Actualiza un pedido, su contenido y el stock correspondiente.
      */
     public function update(Request $request, Pedido $pedido)
     {
-        $request->validate([
-            'esta_cod' => 'required|exists:estados_pedidos,esta_cod',
-        ]);
+        $validatedData = $request->validate(['esta_cod' => 'required|exists:estados_pedidos,esta_cod', 'carrito' => 'required|string']);
+        $nuevoCarritoItems = json_decode($validatedData['carrito'], true);
+        if (empty($nuevoCarritoItems)) { return back()->with('error', 'El carrito no puede quedar vacío.'); }
 
-        $pedido->update(['esta_cod' => $request->esta_cod]);
-
-        // Lógica futura: Si el estado es "Cancelado", se podría re-ingresar el stock.
-
-        return redirect()->route('pedidos.index')->with('success', 'Estado del pedido actualizado.');
+        try {
+            DB::transaction(function () use ($pedido, $nuevoCarritoItems, $validatedData) {
+                $detallesOriginales = $pedido->detalles->keyBy('var_id');
+                foreach ($detallesOriginales as $detalle) { $detalle->variante->increment('var_stok_actual', $detalle->cantidad); }
+                $pedido->detalles()->delete();
+                $nuevoTotal = 0;
+                foreach ($nuevoCarritoItems as $item) {
+                    $variante = VarianteProd::find($item['var_id']);
+                    if (!$variante || $variante->var_stok_actual < $item['cantidad']) { throw new \Exception("Stock insuficiente para: " . ($item['nombre'] ?? 'ID '.$item['var_id'])); }
+                    $pedido->detalles()->create(['var_id' => $item['var_id'], 'cantidad' => $item['cantidad']]);
+                    $variante->decrement('var_stok_actual', $item['cantidad']);
+                    $nuevoTotal += $item['cantidad'] * $item['precio'];
+                }
+                $pedido->update(['esta_cod' => $validatedData['esta_cod'], 'pedi_total' => $nuevoTotal]);
+            });
+        } catch (\Exception $e) { return back()->with('error', 'Error al actualizar: ' . $e->getMessage())->withInput(); }
+        return redirect()->route('pedidos.show', $pedido)->with('success', 'Pedido actualizado exitosamente.');
     }
 
-    /**
-     * Elimina un pedido. (¡CUIDADO!)
-     */
-    public function destroy(Pedido $pedido)
-    {
-        // NOTA: Esta acción no devuelve el stock al inventario. Es una eliminación simple.
-        // En una aplicación real, se prefiere cancelar un pedido en lugar de borrarlo.
-        $pedido->detalles()->delete();
-        $pedido->delete();
-        return redirect()->route('pedidos.index')->with('success', 'Pedido eliminado.');
+    public function destroy(Pedido $pedido) {
+        // En un sistema real, se preferiría cancelar un pedido y devolver el stock.
+        try {
+            DB::transaction(function () use ($pedido) {
+                foreach ($pedido->detalles as $detalle) { $detalle->variante->increment('var_stok_actual', $detalle->cantidad); }
+                $pedido->detalles()->delete(); $pedido->delete();
+            });
+        } catch (\Exception $e) { return back()->with('error', 'Error al eliminar: ' . $e->getMessage()); }
+        return redirect()->route('pedidos.index')->with('success', 'Pedido eliminado y stock devuelto.');
     }
 }

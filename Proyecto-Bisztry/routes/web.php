@@ -24,7 +24,6 @@ use App\Http\Controllers\UserController;
 // Carga las rutas de autenticación (login, registro, logout, etc.)
 require __DIR__.'/auth.php';
 
-
 // Todas las rutas dentro de este grupo requerirán que el usuario esté logueado.
 Route::middleware(['auth'])->group(function () {
 
@@ -36,27 +35,33 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // --- RUTAS DE NUESTRA APLICACIÓN (Accesibles para cualquier usuario logueado) ---
+    // --- RUTAS DE NUESTRA APLICACIÓN ---
     Route::resource('clientes', ClienteController::class);
     Route::resource('proveedores', ProveedorController::class);
     Route::resource('productos', ProductoController::class);
     Route::resource('productos.variantes', VarianteProdController::class)->except(['index', 'show'])->shallow();
     Route::resource('categorias', CategoriaController::class)->except(['show', 'create', 'edit']);
-    Route::resource('pedidos', PedidoController::class);
     Route::resource('reportes', ReporteController::class)->only(['index']);
     
-    // ===================================================================
-    // ---          RUTAS PROTEGIDAS PARA SUPER-ADMINISTRADOR          ---
-    // ===================================================================
-    // Todas las rutas dentro de este grupo solo serán accesibles para
-    // usuarios que pasen la verificación del middleware 'role:superadmin'.
-    Route::middleware('role:superadmin')->group(function () {
-        
-        // Aquí agrupamos todas las rutas que solo el Super Admin puede ver.
+    // =======================================================
+    // --- INICIO DE RUTAS PARA GESTIÓN DE PEDIDOS ---
+    // =======================================================
+    // Rutas para el Asistente de Creación de Pedidos
+    Route::get('/pedidos/crear/paso-1', [PedidoController::class, 'createStep1'])->name('pedidos.create.step1');
+    Route::post('/pedidos/crear/paso-1', [PedidoController::class, 'postStep1'])->name('pedidos.create.step1.post');
+    Route::get('/pedidos/crear/paso-2', [PedidoController::class, 'createStep2'])->name('pedidos.create.step2');
+    Route::post('/pedidos/carrito/add', [PedidoController::class, 'addToCart'])->name('pedidos.cart.add');
+    Route::post('/pedidos/carrito/remove', [PedidoController::class, 'removeFromCart'])->name('pedidos.cart.remove');
+    Route::get('/pedidos/crear/paso-3', [PedidoController::class, 'createStep3'])->name('pedidos.create.step3');
+    // Rutas estándar del CRUD de Pedidos, excepto 'create' que es manejada por nuestro asistente.
+    Route::resource('pedidos', PedidoController::class)->except(['create']);
+    // =======================================================
+    // --- FIN DE RUTAS PARA GESTIÓN DE PEDIDOS ---
+    // =======================================================
+    
+    // Rutas protegidas para Super-Admin
+    Route::middleware(['role.superadmin'])->group(function () {
         Route::resource('roles', RoleController::class)->except(['show']);
         Route::resource('users', UserController::class)->except(['show']);
-
     });
-    // ===================================================================
-    
 });

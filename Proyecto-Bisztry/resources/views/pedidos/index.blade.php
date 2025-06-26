@@ -12,19 +12,27 @@
             <p>Se encontraron {{ $pedidos->total() }} pedidos en total.</p>
         </div>
         <div class="card-actions">
-            <a href="{{ route('pedidos.create') }}" class="btn btn-primary">
+            {{-- ======================================================= --}}
+            {{--         INICIO DE LA CORRECCIÓN DEL ENLACE              --}}
+            {{-- ======================================================= --}}
+            {{-- Cambiamos la ruta de 'pedidos.create' a 'pedidos.create.step1' --}}
+            <a href="{{ route('pedidos.create.step1') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i>
                 Nuevo Pedido
             </a>
+            {{-- ======================================================= --}}
+            {{--              FIN DE LA CORRECCIÓN                       --}}
+            {{-- ======================================================= --}}
         </div>
     </div>
     <div class="card-body">
+        <!-- Formulario de Filtros -->
         <form method="GET" action="{{ route('pedidos.index') }}" class="filters">
             <div class="search-box">
                 <input type="text" name="search" placeholder="Buscar por ID o nombre de cliente..." value="{{ request('search') }}">
             </div>
             <div class="filter-group">
-                <select name="estado_filtro">
+                <select name="estado_filtro" onchange="this.form.submit()">
                     <option value="todos">Todos los estados</option>
                     @foreach($estados as $estado)
                         <option value="{{ $estado->esta_cod }}" {{ request('estado_filtro') == $estado->esta_cod ? 'selected' : '' }}>
@@ -33,10 +41,10 @@
                     @endforeach
                 </select>
             </div>
-            <button type="submit" class="btn btn-outline">Filtrar</button>
             <a href="{{ route('pedidos.index') }}" class="btn btn-outline">Limpiar</a>
         </form>
 
+        <!-- Tabla de Pedidos -->
         <div class="table-responsive">
             <table class="table">
                 <thead>
@@ -53,10 +61,7 @@
                     @forelse($pedidos as $pedido)
                     <tr>
                         <td class="font-bold">PED-{{ $pedido->pedi_id }}</td>
-                        <td>
-                            {{ $pedido->cliente->clie_nombre ?? 'Cliente no disponible' }} 
-                            {{ $pedido->cliente->clie_apellido ?? '' }}
-                        </td>
+                        <td>{{ $pedido->cliente->clie_nombre ?? 'N/A' }} {{ $pedido->cliente->clie_apellido ?? '' }}</td>
                         <td>{{ \Carbon\Carbon::parse($pedido->pedi_fecha)->format('d/m/Y') }}</td>
                         <td>
                             @php
@@ -74,42 +79,24 @@
                         <td class="text-right">${{ number_format($pedido->pedi_total, 2) }}</td>
                         <td class="text-right">
                             <div class="actions-buttons">
-                                <a href="{{ route('pedidos.show', $pedido) }}" class="btn-icon info" title="Ver Detalles del Pedido">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{{ route('pedidos.edit', $pedido) }}" class="btn-icon warning" title="Editar Estado">
-                                    <i class="fas fa-edit"></i>
-                                </a>
+                                <a href="{{ route('pedidos.show', $pedido) }}" class="btn-icon info" title="Ver Detalles del Pedido"><i class="fas fa-eye"></i></a>
+                                <a href="{{ route('pedidos.edit', $pedido) }}" class="btn-icon warning" title="Editar Estado"><i class="fas fa-edit"></i></a>
                             </div>
                         </td>
                     </tr>
                     @empty
-                    <tr>
-                        <td colspan="6" class="text-center">
-                            <div class="empty-state">
-                                <i class="fas fa-clipboard-list"></i>
-                                <h3>No se encontraron pedidos</h3>
-                                <p>No hay pedidos que coincidan con los filtros actuales, o aún no se ha registrado ninguno.</p>
-                            </div>
-                        </td>
-                    </tr>
+                    <tr><td colspan="6" class="text-center"><div class="empty-state"><i class="fas fa-clipboard-list"></i><h3>No se encontraron pedidos</h3><p>No hay pedidos que coincidan con los filtros actuales.</p></div></td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        <div class="pagination-container">
-            {{-- appends(request()->all()) asegura que los filtros se mantengan al cambiar de página --}}
-            {{ $pedidos->appends(request()->all())->links() }}
-        </div>
+        <div class="pagination-container">{{ $pedidos->appends(request()->all())->links() }}</div>
     </div>
 </div>
 <style>
 .filters { display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
-.filters .search-box input, .filters .filter-group select {
-    padding: 0.6rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-}
+.filters .search-box { flex-grow: 1; }
+.filters .search-box input, .filters .filter-group select { padding: 0.6rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); }
 .actions-buttons { display: flex; justify-content: flex-end; gap: 0.5rem; }
 .btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; color: white; border: none; cursor: pointer;}
 .btn-icon.info { background-color: var(--info-color); }
