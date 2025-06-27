@@ -16,13 +16,21 @@ class IsSuperAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Comprueba si el usuario está logueado Y tiene el rol 'Super-Admin'
-        if (Auth::check() && Auth::user()->hasRole('Super-Admin')) {
-            // Si cumple, déjalo pasar a la siguiente petición.
+        // 1. Nos aseguramos de que haya un usuario logueado.
+        if (!Auth::check()) {
+            return redirect('login');
+        }
+
+        // --- LÍNEA DE DEPURACIÓN ELIMINADA ---
+        // La línea dd(Auth::user()->getRoleNames()); ha sido borrada.
+
+        // 2. Ahora, el código continuará y ejecutará esta comprobación:
+        // Si el usuario tiene el rol 'Super-Admin', lo deja pasar.
+        if (Auth::user()->hasRole('Super-Admin')) {
             return $next($request);
         }
 
-        // Si no cumple, aborta la petición y muestra un error 403 (Acceso Prohibido).
+        // 3. Si no tiene el rol, le niega el acceso.
         abort(403, 'Acceso No Autorizado.');
     }
 }
