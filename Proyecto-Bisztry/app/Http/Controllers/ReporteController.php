@@ -14,12 +14,12 @@ class ReporteController extends Controller
     public function index(Request $request)
     {
         // --- 1. CONFIGURACIÓN DE FECHAS (CON FILTROS) ---
-        $periodo = $request->input('periodo', 'mes_actual'); // 'mes_actual' por defecto
+        $periodo = $request->input('periodo', 'mes_actual');
         
         switch ($periodo) {
             case 'ultimos_30_dias':
-                $fechaInicio = Carbon::now()->subDays(30);
-                $fechaFin = Carbon::now();
+                $fechaInicio = Carbon::now()->subDays(29)->startOfDay(); // 30 días incluyendo hoy
+                $fechaFin = Carbon::now()->endOfDay();
                 break;
             case 'este_anio':
                 $fechaInicio = Carbon::now()->startOfYear();
@@ -44,26 +44,29 @@ class ReporteController extends Controller
         $kpis['ticketPromedio'] = ($kpis['pedidosCompletados'] > 0) ? $kpis['ventasTotales'] / $kpis['pedidosCompletados'] : 0;
 
         // --- 4. DATOS PARA GRÁFICO PRINCIPAL (VENTAS DIARIAS/MENSUALES) ---
-        $formatoFecha = ($periodo === 'este_anio') ? '%Y-%m' : '%Y-%m-%d';
-        $labelFormato = ($periodo === 'este_anio') ? 'M' : 'd M';
+        
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Usamos el formato de fecha correcto para PostgreSQL: 'YYYY-MM' o 'YYYY-MM-DD'
+        $formatoFechaSQL = ($periodo === 'este_anio') ? 'YYYY-MM' : 'YYYY-MM-DD';
+        $labelFormatoPHP = ($periodo === 'este_anio') ? 'M Y' : 'd M';
         
         $ventasAgrupadas = (clone $pedidosCompletadosQuery)
             ->select(
-                DB::raw("to_char(pedi_fecha, '$formatoFecha') as fecha_agrupada"),
+                DB::raw("to_char(pedi_fecha, '$formatoFechaSQL') as fecha_agrupada"),
                 DB::raw('SUM(pedi_total) as total')
             )
             ->groupBy('fecha_agrupada')
             ->orderBy('fecha_agrupada', 'asc')
             ->get();
+        // --- FIN DE LA CORRECCIÓN ---
         
         $graficoPrincipal = [
-            'labels' => $ventasAgrupadas->map(fn($item) => Carbon::parse($item->fecha_agrupada)->format($labelFormato)),
+            'labels' => $ventasAgrupadas->map(fn($item) => Carbon::parse($item->fecha_agrupada)->format($labelFormatoPHP)),
             'valores' => $ventasAgrupadas->pluck('total')
         ];
 
         // --- 5. DATOS PARA GRÁFICOS SECUNDARIOS ---
-        $ventasPorCategoria = Categoria::select('categorias.cate_detalle')
-            ->join('productos', 'categorias.cate_id', '=', 'productos.cate_id')
+        $ventasPorCategoria = Categoria::join('productos', 'categorias.cate_id', '=', 'productos.cate_id')
             ->join('variantes_prod', 'productos.prod_cod', '=', 'variantes_prod.prod_cod')
             ->join('detalles_pedidos', 'variantes_prod.var_id', '=', 'detalles_pedidos.var_id')
             ->join('pedidos', 'detalles_pedidos.pedi_id', '=', 'pedidos.pedi_id')
@@ -73,7 +76,7 @@ class ReporteController extends Controller
             ->groupBy('categorias.cate_detalle')
             ->orderBy('total', 'desc')
             ->get();
-
+        
         $ventasPorMetodoPago = MetodoPago::join('pedidos', 'metodos_pago.meto_cod', '=', 'pedidos.meto_cod')
             ->where('pedidos.esta_cod', 'ENT')
             ->whereBetween('pedidos.pedi_fecha', [$fechaInicio, $fechaFin])
