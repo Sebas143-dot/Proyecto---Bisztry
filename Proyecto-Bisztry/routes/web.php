@@ -36,26 +36,31 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // --- RUTAS DE NUESTRA APLICACIÓN (Accesibles para cualquier usuario logueado) ---
+    // --- RUTAS DE NUESTRA APLICACIÓN ---
     Route::resource('clientes', ClienteController::class);
     Route::resource('proveedores', ProveedorController::class);
     Route::resource('productos', ProductoController::class);
     Route::resource('productos.variantes', VarianteProdController::class)->except(['index', 'show'])->shallow();
     Route::resource('categorias', CategoriaController::class)->except(['show', 'create', 'edit']);
-    Route::resource('pedidos', PedidoController::class);
     Route::resource('reportes', ReporteController::class)->only(['index']);
     
-    // ===================================================================
-    // ---      RUTAS PROTEGIDAS PARA SUPER-ADMINISTRADOR (CORREGIDO)    ---
-    // ===================================================================
-    // Usamos el middleware que viene con el paquete spatie/laravel-permission.
-    // La sintaxis 'role:Super-Admin' le dice: "solo deja pasar a usuarios con el rol 'Super-Admin'".
+    // =======================================================
+    // --- RUTAS PARA GESTIÓN DE PEDIDOS (CORREGIDO) ---
+    // =======================================================
+    // Se definen las rutas específicas para cada paso del asistente de creación.
+    Route::get('/pedidos/crear/paso-1', [PedidoController::class, 'createStep1'])->name('pedidos.create.step1');
+    Route::post('/pedidos/crear/paso-1', [PedidoController::class, 'postStep1'])->name('pedidos.create.step1.post');
+    Route::get('/pedidos/crear/paso-2', [PedidoController::class, 'createStep2'])->name('pedidos.create.step2');
+    Route::post('/pedidos/carrito/add', [PedidoController::class, 'addToCart'])->name('pedidos.cart.add');
+    Route::post('/pedidos/carrito/remove', [PedidoController::class, 'removeFromCart'])->name('pedidos.cart.remove');
+    Route::get('/pedidos/crear/paso-3', [PedidoController::class, 'createStep3'])->name('pedidos.create.step3');
+    // Se mantienen las rutas estándar del CRUD de Pedidos, excepto 'create'.
+    Route::resource('pedidos', PedidoController::class)->except(['create']);
+    // =======================================================
+    
+    // Rutas protegidas para Super-Admin
     Route::middleware(['role:Super-Admin'])->group(function () {
-        
         Route::resource('roles', RoleController::class)->except(['show']);
         Route::resource('users', UserController::class)->except(['show']);
-
     });
-    // ===================================================================
-    
 });
