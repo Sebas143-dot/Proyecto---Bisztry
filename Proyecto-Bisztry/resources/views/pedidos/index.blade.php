@@ -12,21 +12,13 @@
             <p>Se encontraron {{ $pedidos->total() }} pedidos en total.</p>
         </div>
         <div class="card-actions">
-            {{-- ======================================================= --}}
-            {{--         INICIO DE LA CORRECCIÓN DEL ENLACE              --}}
-            {{-- ======================================================= --}}
-            {{-- Cambiamos la ruta de 'pedidos.create' a 'pedidos.create.step1' --}}
             <a href="{{ route('pedidos.create.step1') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i>
                 Nuevo Pedido
             </a>
-            {{-- ======================================================= --}}
-            {{--              FIN DE LA CORRECCIÓN                       --}}
-            {{-- ======================================================= --}}
         </div>
     </div>
     <div class="card-body">
-        <!-- Formulario de Filtros -->
         <form method="GET" action="{{ route('pedidos.index') }}" class="filters">
             <div class="search-box">
                 <input type="text" name="search" placeholder="Buscar por ID o nombre de cliente..." value="{{ request('search') }}">
@@ -44,7 +36,6 @@
             <a href="{{ route('pedidos.index') }}" class="btn btn-outline">Limpiar</a>
         </form>
 
-        <!-- Tabla de Pedidos -->
         <div class="table-responsive">
             <table class="table">
                 <thead>
@@ -76,7 +67,13 @@
                             @endphp
                             <span class="badge {{ $estadoClass }}">{{ $pedido->estado->esta__detalle ?? 'Sin estado' }}</span>
                         </td>
-                        <td class="text-right">${{ number_format($pedido->pedi_total, 2) }}</td>
+                        {{-- ======================================================= --}}
+                        {{--         INICIO DE LA CORRECCIÓN DEL TOTAL             --}}
+                        {{-- ======================================================= --}}
+                        <td class="text-right font-bold">${{ number_format($pedido->pedi_total + $pedido->pedi_costo_envio, 2) }}</td>
+                        {{-- ======================================================= --}}
+                        {{--              FIN DE LA CORRECCIÓN                       --}}
+                        {{-- ======================================================= --}}
                         <td class="text-right">
                             <div class="actions-buttons">
                                 <a href="{{ route('pedidos.show', $pedido) }}" class="btn-icon info" title="Ver Detalles del Pedido"><i class="fas fa-eye"></i></a>
