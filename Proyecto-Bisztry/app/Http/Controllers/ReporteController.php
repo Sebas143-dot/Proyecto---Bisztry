@@ -78,39 +78,52 @@ class ReporteController extends Controller
         return view('reportes.index', compact('kpis', 'graficoPrincipal', 'ventasPorCategoria', 'ventasPorMetodoPago', 'periodo'));
     }
 
-    // --- INICIO DE MÉTODOS DE EXPORTACIÓN AÑADIDOS ---
+    // --- INICIO DE MÉTODOS DE EXPORTACIÓN MEJORADOS ---
 
     /**
      * Genera y descarga un reporte de ventas en formato PDF.
      */
-    // ...
     public function exportarPDF(Request $request)
     {
         $periodo = $request->input('periodo', 'mes_actual');
+        $periodoDescriptivo = '';
         switch ($periodo) {
-            case 'ultimos_30_dias': $fechaInicio = Carbon::now()->subDays(29)->startOfDay(); $fechaFin = Carbon::now()->endOfDay(); break;
-            case 'este_anio': $fechaInicio = Carbon::now()->startOfYear(); $fechaFin = Carbon::now()->endOfYear(); break;
-            default: $fechaInicio = Carbon::now()->startOfMonth(); $fechaFin = Carbon::now()->endOfMonth(); break;
+            case 'ultimos_30_dias':
+                $fechaInicio = Carbon::now()->subDays(29)->startOfDay();
+                $fechaFin = Carbon::now()->endOfDay();
+                $periodoDescriptivo = 'Últimos 30 Días';
+                break;
+            case 'este_anio':
+                $fechaInicio = Carbon::now()->startOfYear();
+                $fechaFin = Carbon::now()->endOfYear();
+                $periodoDescriptivo = 'Año ' . $fechaInicio->year;
+                break;
+            default:
+                $fechaInicio = Carbon::now()->startOfMonth();
+                $fechaFin = Carbon::now()->endOfMonth();
+                $periodoDescriptivo = ucfirst(Carbon::now('America/Guayaquil')->locale('es')->monthName) . ' ' . $fechaInicio->year;
+                break;
         }
 
         $pedidosQuery = Pedido::where('esta_cod', 'ENT')->whereBetween('pedi_fecha', [$fechaInicio, $fechaFin]);
         
-        // CORRECCIÓN: Cargamos todas las relaciones necesarias para el PDF
-        $pedidos = (clone $pedidosQuery)->with(['cliente', 'estado', 'detalles.variante.producto'])->get();
+        $pedidos = (clone $pedidosQuery)->with(['cliente', 'detalles.variante.producto'])->get();
         
+        // --- CÁLCULO DE KPIS Y TOTALES PARA EL REPORTE ---
         $kpis = [
-            'ventasTotales' => (clone $pedidosQuery)->sum('pedi_total'),
+            'ventasTotales' => (clone $pedidosQuery)->sum(DB::raw('pedi_total + pedi_costo_envio')),
             'pedidosCompletados' => $pedidos->count(),
+            'totalProductos' => (clone $pedidosQuery)->sum('pedi_total'), // Suma solo de productos
+            'totalEnvios' => (clone $pedidosQuery)->sum('pedi_costo_envio'), // Suma solo de envíos
         ];
         $kpis['ticketPromedio'] = ($kpis['pedidosCompletados'] > 0) ? $kpis['ventasTotales'] / $kpis['pedidosCompletados'] : 0;
         
         $fechaGeneracion = Carbon::now('America/Guayaquil')->format('d/m/Y H:i:s') . ' (GMT-5)';
 
-        $pdf = Pdf::loadView('pdf.reporte_ventas', compact('pedidos', 'kpis', 'periodo', 'fechaGeneracion'));
+        $pdf = Pdf::loadView('pdf.reporte_ventas', compact('pedidos', 'kpis', 'periodoDescriptivo', 'fechaGeneracion'));
         
         return $pdf->download('reporte-ventas-bizstry-'.date('Y-m-d').'.pdf');
     }
-    // ...
 
     /**
      * Genera y descarga un reporte de pedidos en formato Excel.
@@ -124,7 +137,6 @@ class ReporteController extends Controller
             default: $fechaInicio = Carbon::now()->startOfMonth(); $fechaFin = Carbon::now()->endOfMonth(); break;
         }
         
-        // Pasamos el periodo a la clase de exportación para usarlo en el título del archivo.
         return Excel::download(new PedidosReportExport($fechaInicio, $fechaFin, $periodo), 'reporte-pedidos-bizstry-'.date('Y-m-d').'.xlsx');
     }
     // --- FIN DE MÉTODOS DE EXPORTACIÓN AÑADIDOS ---
