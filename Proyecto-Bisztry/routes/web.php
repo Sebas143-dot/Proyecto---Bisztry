@@ -31,6 +31,34 @@ Route::middleware(['auth'])->group(function () {
     // Ruta Principal
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Dashboards por rol
+Route::get('/ventas/dashboard', function () {
+    return view('ventas.dashboard');
+})->name('ventas.dashboard');
+
+Route::get('/contabilidad/dashboard', function () {
+    return view('contabilidad.dashboard');
+})->name('contabilidad.dashboard');
+
+Route::get('/publicidad/dashboard', function () {
+    return view('publicidad.dashboard');
+})->name('publicidad.dashboard');
+
+Route::get('/produccion/dashboard', function () {
+    return view('produccion.dashboard');
+})->name('produccion.dashboard');
+
+Route::get('/logistica/dashboard', function () {
+    return view('logistica.dashboard');
+})->name('logistica.dashboard');
+
+Route::get('/auditoria/dashboard', function () {
+    return view('auditoria.dashboard');
+})->name('auditoria.dashboard');
+
+Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+
     // Rutas del Perfil de Usuario (de Breeze)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
