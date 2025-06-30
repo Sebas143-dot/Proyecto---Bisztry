@@ -12,14 +12,25 @@
             <a href="#" class="tab" :class="{ 'tab-active': tab === 'ventas' }" @click.prevent="tab = 'ventas'"><i class="fas fa-chart-line"></i> Ventas</a>
             <a href="#" class="tab" :class="{ 'tab-active': tab === 'productos' }" @click.prevent="tab = 'productos'"><i class="fas fa-box"></i> Productos</a>
         </div>
-        <form method="GET" action="{{ route('reportes.index') }}" class="filtros-fecha">
-            <select name="periodo" class="select-filtro" onchange="this.form.submit()">
-                <option value="mes_actual" {{ $periodo == 'mes_actual' ? 'selected' : '' }}>Este Mes</option>
-                <option value="ultimos_30_dias" {{ $periodo == 'ultimos_30_dias' ? 'selected' : '' }}>Últimos 30 días</option>
-                <option value="este_anio" {{ $periodo == 'este_anio' ? 'selected' : '' }}>Este Año</option>
-            </select>
-            <button type="button" class="btn btn-outline"><i class="fas fa-download"></i> Exportar</button>
-        </form>
+        
+        {{-- ======================================================= --}}
+        {{--         INICIO DE LA MEJORA DE FUNCIONALIDAD            --}}
+        {{-- ======================================================= --}}
+        <div class="filtros-fecha">
+            <form id="filtro-form" method="GET" action="{{ route('reportes.index') }}">
+                <select name="periodo" class="select-filtro" onchange="this.form.submit()">
+                    <option value="mes_actual" {{ $periodo == 'mes_actual' ? 'selected' : '' }}>Este Mes</option>
+                    <option value="ultimos_30_dias" {{ $periodo == 'ultimos_30_dias' ? 'selected' : '' }}>Últimos 30 días</option>
+                    <option value="este_anio" {{ $periodo == 'este_anio' ? 'selected' : '' }}>Este Año</option>
+                </select>
+            </form>
+            {{-- Pasamos el periodo actual como parámetro a las rutas de exportación --}}
+            <a href="{{ route('reportes.exportar.pdf', ['periodo' => $periodo]) }}" class="btn btn-outline" target="_blank"><i class="fas fa-file-pdf"></i> PDF</a>
+            <a href="{{ route('reportes.exportar.excel', ['periodo' => $periodo]) }}" class="btn btn-outline"><i class="fas fa-file-excel"></i> Excel</a>
+        </div>
+        {{-- ======================================================= --}}
+        {{--              FIN DE LA MEJORA                           --}}
+        {{-- ======================================================= --}}
     </div>
 
     {{-- Pestaña "Ventas" --}}
@@ -57,7 +68,7 @@
 .tab { display:flex; align-items:center; gap: 0.5rem; padding: 0.75rem 0.25rem; font-weight: 600; color: var(--text-secondary); text-decoration: none; border-bottom: 3px solid transparent; transition: var(--transition-fast); }
 .tab:hover { color: var(--primary-color); }
 .tab.tab-active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-.filtros-fecha { display: flex; gap: 0.75rem; }
+.filtros-fecha { display: flex; gap: 0.75rem; align-items: center; }
 .select-filtro { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.5rem 0.75rem; background-color: var(--surface-color); }
 .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
 .stat-card .stat-title { font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); }

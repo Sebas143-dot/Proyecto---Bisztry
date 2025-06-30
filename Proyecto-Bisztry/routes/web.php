@@ -27,6 +27,11 @@ require __DIR__.'/auth.php';
 
 // Todas las rutas dentro de este grupo requerirán que el usuario esté logueado.
 Route::middleware(['auth'])->group(function () {
+    Route::resource('reportes', ReporteController::class)->only(['index']);
+    
+    // --- AÑADIR ESTAS DOS LÍNEAS ---
+    Route::get('/reportes/exportar/pdf', [ReporteController::class, 'exportarPDF'])->name('reportes.exportar.pdf');
+    Route::get('/reportes/exportar/excel', [ReporteController::class, 'exportarExcel'])->name('reportes.exportar.excel');
 
     // Ruta Principal
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');

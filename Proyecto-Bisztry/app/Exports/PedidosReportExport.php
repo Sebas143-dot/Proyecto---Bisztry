@@ -83,7 +83,6 @@ class ReporteController extends Controller
     /**
      * Genera y descarga un reporte de ventas en formato PDF.
      */
-    // ...
     public function exportarPDF(Request $request)
     {
         $periodo = $request->input('periodo', 'mes_actual');
@@ -95,22 +94,22 @@ class ReporteController extends Controller
 
         $pedidosQuery = Pedido::where('esta_cod', 'ENT')->whereBetween('pedi_fecha', [$fechaInicio, $fechaFin]);
         
-        // CORRECCIÓN: Cargamos todas las relaciones necesarias para el PDF
-        $pedidos = (clone $pedidosQuery)->with(['cliente', 'estado', 'detalles.variante.producto'])->get();
+        $pedidos = (clone $pedidosQuery)->with('cliente', 'estado')->get();
         
+        // Se calculan los KPIs para el PDF, incluyendo el costo de envío para el total.
         $kpis = [
-            'ventasTotales' => (clone $pedidosQuery)->sum('pedi_total'),
+            'ventasTotales' => (clone $pedidosQuery)->sum(DB::raw('pedi_total + pedi_costo_envio')),
             'pedidosCompletados' => $pedidos->count(),
         ];
         $kpis['ticketPromedio'] = ($kpis['pedidosCompletados'] > 0) ? $kpis['ventasTotales'] / $kpis['pedidosCompletados'] : 0;
         
+        // Se crea la fecha con la zona horaria de Quito (GMT-5)
         $fechaGeneracion = Carbon::now('America/Guayaquil')->format('d/m/Y H:i:s') . ' (GMT-5)';
 
         $pdf = Pdf::loadView('pdf.reporte_ventas', compact('pedidos', 'kpis', 'periodo', 'fechaGeneracion'));
         
         return $pdf->download('reporte-ventas-bizstry-'.date('Y-m-d').'.pdf');
     }
-    // ...
 
     /**
      * Genera y descarga un reporte de pedidos en formato Excel.
@@ -129,3 +128,4 @@ class ReporteController extends Controller
     }
     // --- FIN DE MÉTODOS DE EXPORTACIÓN AÑADIDOS ---
 }
+    
