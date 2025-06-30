@@ -24,6 +24,15 @@
 
         <form action="{{ route('clientes.store') }}" method="POST">
             @csrf
+            
+            {{-- ======================================================= --}}
+            {{--         INICIO DE LA MEJORA DE FUNCIONALIDAD            --}}
+            {{-- ======================================================= --}}
+            {{-- 1. CAMPO OCULTO: Este campo le dice al controlador a dónde volver --}}
+            {{-- después de guardar. Si venimos desde el asistente de pedidos, tendrá un valor. --}}
+            <input type="hidden" name="_redirect_to" value="{{ $redirect_to ?? '' }}">
+            {{-- ======================================================= --}}
+
             <div class="form-grid">
                 <div class="form-group">
                     <label for="clie_nombre">Nombre *</label>
@@ -64,7 +73,12 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar Cliente</button>
-                <a href="{{ route('clientes.index') }}" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
+                
+                {{-- ======================================================= --}}
+                {{-- 2. ENLACE DINÁMICO: El botón "Cancelar" ahora es más inteligente. --}}
+                {{-- Si hay una URL de redirección, vuelve allí. Si no, vuelve a la lista de clientes. --}}
+                <a href="{{ $redirect_to ?? route('clientes.index') }}" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
+                {{-- ======================================================= --}}
             </div>
         </form>
     </div>
@@ -75,7 +89,7 @@
 .form-group { display: flex; flex-direction: column; }
 .form-group.full-width { grid-column: 1 / -1; }
 .form-group label { margin-bottom: 0.5rem; font-weight: 600; }
-.form-group input, .form-group select, .form-group textarea { padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 1rem; }
-.form-actions { display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid #e5e7eb; padding-top: 1.5rem; margin-top: 1.5rem; }
+.form-group input, .form-group select, .form-group textarea { padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 1rem; }
+.form-actions { display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1.5rem; }
 </style>
 @endsection

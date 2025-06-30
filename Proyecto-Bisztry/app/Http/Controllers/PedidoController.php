@@ -30,10 +30,18 @@ class PedidoController extends Controller
         return view('pedidos.index', compact('pedidos', 'estados'));
     }
 
-    public function createStep1() {
-        session()->forget('pedido');
+public function createStep1(Request $request)
+    {
+        // Si no venimos de crear un cliente, limpiamos la sesión.
+        if (!$request->has('new_client_id')) {
+            session()->forget('pedido');
+        }
+        
         $clientes = Cliente::orderBy('clie_nombre')->get();
-        return view('pedidos.create-step-1', compact('clientes'));
+        // Obtenemos el ID del nuevo cliente desde la URL, si existe.
+        $newClientId = $request->query('new_client_id');
+
+        return view('pedidos.create-step-1', compact('clientes', 'newClientId'));
     }
 
     public function postStep1(Request $request) {

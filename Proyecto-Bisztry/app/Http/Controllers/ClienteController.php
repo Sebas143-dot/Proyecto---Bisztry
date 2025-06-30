@@ -23,15 +23,17 @@ class ClienteController extends Controller
         return view('clientes.index', compact('clientes'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $ciudades = Ciudad::orderBy('ciud_nombre')->get();
-        return view('clientes.create', compact('ciudades'));
+        // Obtenemos la URL de redirección desde la petición, si existe
+        $redirect_to = $request->query('redirect_to');
+        return view('clientes.create', compact('ciudades', 'redirect_to'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'clie_nombre' => 'required|string|max:50',
             'clie_apellido' => 'required|string|max:50',
             'clie_email' => 'required|email|max:50|unique:clientes,clie_email',
@@ -41,7 +43,16 @@ class ClienteController extends Controller
             'clie_fecha_nac' => 'nullable|date',
         ]);
 
-        Cliente::create($request->all());
+        $cliente = Cliente::create($validatedData);
+
+        // Si el formulario nos envió una URL de redirección, la usamos.
+        if ($request->filled('_redirect_to')) {
+            // Añadimos el ID del nuevo cliente a la URL para poder pre-seleccionarlo.
+            $redirectUrl = $request->_redirect_to . '?new_client_id=' . $cliente->clie_id;
+            return redirect($redirectUrl)->with('success', 'Cliente creado. Ahora puedes seleccionarlo en la lista.');
+        }
+
+        // Si no, volvemos a la lista de clientes (comportamiento por defecto).
         return redirect()->route('clientes.index')->with('success', 'Cliente creado exitosamente.');
     }
     
