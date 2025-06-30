@@ -31,9 +31,10 @@ class ReporteController extends Controller
 
         $pedidosCompletadosQuery = Pedido::where('esta_cod', 'ENT')->whereBetween('pedi_fecha', [$fechaInicio, $fechaFin]);
 
-        // --- INICIO DE LA CORRECCIÓN DE TOTALES ---
+        // --- CÁLCULO DE TOTALES (VERSIÓN ANTERIOR) ---
+        // Aquí se suma únicamente el 'pedi_total' (total de productos)
         $kpis = [
-            'ventasTotales' => (float) (clone $pedidosCompletadosQuery)->sum(DB::raw('pedi_total + pedi_costo_envio')),
+            'ventasTotales' => (float) (clone $pedidosCompletadosQuery)->sum('pedi_total'),
             'pedidosCompletados' => (clone $pedidosCompletadosQuery)->count(),
         ];
         $kpis['ticketPromedio'] = ($kpis['pedidosCompletados'] > 0) ? $kpis['ventasTotales'] / $kpis['pedidosCompletados'] : 0;
@@ -44,10 +45,11 @@ class ReporteController extends Controller
         $ventasAgrupadas = (clone $pedidosCompletadosQuery)
             ->select(
                 DB::raw("to_char(pedi_fecha, '$formatoFechaSQL') as fecha_agrupada"),
-                DB::raw('SUM(pedi_total + pedi_costo_envio) as total') // También corregimos aquí
+                // El cálculo del gráfico también usa solo 'pedi_total'
+                DB::raw('SUM(pedi_total) as total')
             )
             ->groupBy('fecha_agrupada')->orderBy('fecha_agrupada', 'asc')->get();
-        // --- FIN DE LA CORRECCIÓN DE TOTALES ---
+        // --- FIN DE LA REVERSIÓN ---
         
         $graficoPrincipal = [
             'labels' => $ventasAgrupadas->map(fn($item) => Carbon::parse($item->fecha_agrupada)->format($labelFormatoPHP)),
