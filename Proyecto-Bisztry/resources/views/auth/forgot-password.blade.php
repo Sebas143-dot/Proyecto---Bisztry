@@ -7,7 +7,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-3a1 1 0 011-1h2.586l6.243-6.243A6 6 0 0121 9z"/>
                     </svg>
                 </div>
-                <h2>¿Olvidaste tu contraseña?</h2>
+                <h2>¿Olvidaste tu contraseña jesus gay?</h2>
                 <p class="description">
                     No te preocupes. Solo proporciona tu dirección de correo electrónico y te enviaremos un enlace para restablecer tu contraseña que te permitirá elegir una nueva.
                 </p>
