@@ -27,20 +27,22 @@ jobs:
         id: check_files
         uses: andstor/file-existence-action@v1
         with:
-          files: 'composer.json'
+          files: 'Proyecto---Bisztry/Proyecto-Bisztry/composer.json'
 
       - name: Run composer install if composer.json exists
         if: steps.check_files.outputs.files_exists == 'true'
         run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
+        working-directory: Proyecto---Bisztry/Proyecto-Bisztry
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: zip -r release.zip .
+        working-directory: Proyecto---Bisztry/Proyecto-Bisztry
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: php-app
-          path: release.zip
+          path: Proyecto---Bisztry/Proyecto-Bisztry/release.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -57,7 +59,7 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -72,4 +74,3 @@ jobs:
           app-name: 'Gestor-Bizstry'
           slot-name: 'Production'
           package: .
-          
