@@ -13,10 +13,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read # This is required for actions/checkout
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -45,37 +46,40 @@ jobs:
           path: Proyecto---Bisztry/Proyecto-Bisztry/release.zip
 
   deploy:
-  runs-on: ubuntu-latest
-  needs: build
-  permissions:
-    id-token: write
-    contents: read
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
 
-  steps:
-    - name: Download artifact from build job
-      uses: actions/download-artifact@v4
-      with:
-        name: php-app
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: php-app
 
-    - name: Unzip artifact
-      run: unzip release.zip
+      - name: Unzip artifact and move contents to root
+        run: |
+          unzip release.zip
+          mv Proyecto-Bisztry/* .
+          mv Proyecto-Bisztry/.* . || true  # Ocultos como .env si existieran
+          rm -rf Proyecto-Bisztry
 
-    - name: Run startup script
-      run: bash startup.sh
-      working-directory: Proyecto-Bisztry
+      - name: Run startup script
+        run: bash startup.sh
 
-    - name: Login to Azure
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_C5D8A45E1F3C47418A9BC0F15104382D }}
-        tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_ED2E47A693AC490FA071B2C6E5C72EA7 }}
-        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6BB276668FF455B8272DD85B52741D8 }}
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_C5D8A45E1F3C47418A9BC0F15104382D }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_ED2E47A693AC490FA071B2C6E5C72EA7 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C6BB276668FF455B8272DD85B52741D8 }}
 
-    - name: 'Deploy to Azure Web App'
-      uses: azure/webapps-deploy@v3
-      id: deploy-to-webapp
-      with:
-        app-name: 'Gestor-Bizstry'
-        slot-name: 'Production'
-        package: /home/site/wwwroot
-
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
+        with:
+          app-name: 'Gestor-Bizstry'
+          slot-name: 'Production'
+          package: .
+          startup-command: 'bash startup.sh'
