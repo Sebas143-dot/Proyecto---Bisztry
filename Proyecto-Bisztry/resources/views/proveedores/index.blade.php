@@ -18,11 +18,24 @@
         </div>
     </div>
     <div class="card-body">
-        <form method="GET" action="{{ route('proveedores.index') }}" class="filters">
-            <div class="search-box"><input type="text" name="search" placeholder="Buscar por RUC, nombre o contacto..." value="{{ request('search') }}"></div>
-            <button type="submit" class="btn btn-outline">Buscar</button>
-            <a href="{{ route('proveedores.index') }}" class="btn btn-outline">Limpiar</a>
-        </form>
+        <form method="GET" action="{{ route('proveedores.index') }}" class="flex flex-col sm:flex-row items-center gap-3 mb-4">
+    <input 
+        type="text" 
+        name="search" 
+        placeholder="Buscar por RUC, nombre o contacto..." 
+        value="{{ request('search') }}"
+        class="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+    >
+
+    <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 shadow">
+        <i class="fas fa-search mr-2"></i> Buscar
+    </button>
+
+    <a href="{{ route('proveedores.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300 shadow">
+        <i class="fas fa-times mr-2"></i> Limpiar
+    </a>
+</form>
+
 
         <div class="table-responsive">
             <table class="table">

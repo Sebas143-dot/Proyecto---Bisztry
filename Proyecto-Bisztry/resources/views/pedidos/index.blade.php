@@ -19,22 +19,37 @@
         </div>
     </div>
     <div class="card-body">
-        <form method="GET" action="{{ route('pedidos.index') }}" class="filters">
-            <div class="search-box">
-                <input type="text" name="search" placeholder="Buscar por ID o nombre de cliente..." value="{{ request('search') }}">
-            </div>
-            <div class="filter-group">
-                <select name="estado_filtro" onchange="this.form.submit()">
-                    <option value="todos">Todos los estados</option>
-                    @foreach($estados as $estado)
-                        <option value="{{ $estado->esta_cod }}" {{ request('estado_filtro') == $estado->esta_cod ? 'selected' : '' }}>
-                            {{ $estado->esta__detalle }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <a href="{{ route('pedidos.index') }}" class="btn btn-outline">Limpiar</a>
-        </form>
+        <form method="GET" action="{{ route('pedidos.index') }}" class="flex flex-col sm:flex-row items-center gap-3 mb-4">
+    {{-- Campo de búsqueda --}}
+    <input 
+        type="text" 
+        name="search" 
+        placeholder="Buscar por ID o nombre de cliente..." 
+        value="{{ request('search') }}"
+        class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+    >
+
+    {{-- Selector de estado --}}
+    <select 
+        name="estado_filtro" 
+        onchange="this.form.submit()"
+        class="w-full sm:w-52 px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-indigo-500 focus:border-indigo-500"
+    >
+        <option value="todos">Todos los estados</option>
+        @foreach($estados as $estado)
+            <option value="{{ $estado->esta_cod }}" {{ request('estado_filtro') == $estado->esta_cod ? 'selected' : '' }}>
+                {{ $estado->esta__detalle }}
+            </option>
+        @endforeach
+    </select>
+
+    {{-- Botón Limpiar --}}
+    <a href="{{ route('pedidos.index') }}" 
+       class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300 shadow">
+        <i class="fas fa-times mr-2"></i> Limpiar
+    </a>
+</form>
+
 
         <div class="table-responsive">
             <table class="table">

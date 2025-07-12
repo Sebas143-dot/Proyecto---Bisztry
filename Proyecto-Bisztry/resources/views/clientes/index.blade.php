@@ -20,15 +20,20 @@
     </div>
     <div class="card-body">
         <div class="filters">
-            <form method="GET" action="{{ route('clientes.index') }}">
-                <div class="search-box wide">
-                    <input type="text" name="search" placeholder="Buscar por nombre, apellido o email..." value="{{ request('search') }}">
-                </div>
-                <button type="submit" class="btn btn-outline">
-                    <i class="fas fa-search"></i>
-                    Buscar
-                </button>
-            </form>
+            <form method="GET" action="{{ route('clientes.index') }}" class="flex flex-col sm:flex-row items-center gap-3 mb-4">
+    <input 
+        type="text" 
+        name="search" 
+        placeholder="Buscar por nombre, apellido o email..." 
+        value="{{ request('search') }}"
+        class="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+    >
+
+    <button type="submit"
+        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 shadow">
+        <i class="fas fa-search mr-2"></i> Buscar
+    </button>
+</form>
         </div>
 
         <div class="table-responsive">
