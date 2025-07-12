@@ -38,7 +38,13 @@
                         <li class="{{ request()->routeIs('clientes.*') ? 'active' : '' }}"><a href="{{ route('clientes.index') }}"><i class="fas fa-users fa-fw"></i><span>Clientes</span></a></li>
                         <li class="{{ request()->routeIs('productos.*') || request()->routeIs('categorias.*') || request()->routeIs('variantes.*') ? 'active' : '' }}"><a href="{{ route('productos.index') }}"><i class="fas fa-box fa-fw"></i><span>Productos</span></a></li>
                         <li class="{{ request()->routeIs('proveedores.*') ? 'active' : '' }}"><a href="{{ route('proveedores.index') }}"><i class="fas fa-truck fa-fw"></i><span>Proveedores</span></a></li>
-                        <li class="{{ request()->routeIs('reportes.*') ? 'active' : '' }}"><a href="{{ route('reportes.index') }}"><i class="fas fa-chart-bar fa-fw"></i><span>Reportes</span></a></li>
+                        @can('ver_reportes')
+                            <li class="{{ request()->routeIs('reportes.*') ? 'active' : '' }}">
+                                <a href="{{ route('reportes.index') }}">
+                                    <i class="fas fa-chart-bar fa-fw"></i><span>Reportes</span>
+                                </a>
+                            </li>
+                        @endcan
                         @role('Super-Admin')
                         <li class="{{ request()->routeIs('users.*') || request()->routeIs('roles.*') ? 'active' : '' }}"><a href="{{ route('users.index') }}"><i class="fas fa-cog fa-fw"></i><span>Usuarios y Roles</span></a></li>
                         @endrole

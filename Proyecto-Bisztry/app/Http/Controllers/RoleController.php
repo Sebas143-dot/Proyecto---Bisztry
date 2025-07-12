@@ -16,11 +16,16 @@ class RoleController extends Controller
     }
 
     public function create()
-    {
-        // Pasamos todos los permisos existentes a la vista de creación
-        $permissions = Permission::all();
-        return view('roles.create', compact('permissions'));
-    }
+{
+    $permissions = Permission::all()
+        ->groupBy(function ($permission) {
+            // Extrae el "módulo" del permiso, por ejemplo: 'gestionar_usuarios' → 'usuarios'
+            $parts = explode('_', $permission->name);
+            return $parts[1] ?? 'otros';
+        });
+
+    return view('roles.create', compact('permissions'));
+}
 
     public function store(Request $request)
     {
@@ -40,6 +45,42 @@ class RoleController extends Controller
         return redirect()->route('roles.index')->with('success', 'Rol creado exitosamente.');
     }
 
-    // Los métodos edit, update y destroy los añadiremos si los necesitas.
-    // Por ahora, nos centramos en crear.
+    public function edit(Role $role)
+{
+    // Agrupamos los permisos como en 'create'
+    $permissions = Permission::all()->groupBy(function ($permission) {
+        $parts = explode('_', $permission->name);
+        return $parts[1] ?? 'otros';
+    });
+
+    // Obtenemos los nombres de los permisos que ya tiene este rol
+    $rolePermissions = $role->permissions->pluck('name')->toArray();
+
+    return view('roles.edit', compact('role', 'permissions', 'rolePermissions'));
+}
+
+public function update(Request $request, Role $role)
+{
+    $request->validate([
+        'name' => 'required|string|unique:roles,name,' . $role->id,
+        'permissions' => 'nullable|array'
+    ]);
+
+    // Actualizamos el nombre
+    $role->name = $request->name;
+    $role->save();
+
+    // Sincronizamos los permisos
+    $role->syncPermissions($request->permissions ?? []);
+
+    return redirect()->route('roles.index')->with('success', 'Rol actualizado correctamente.');
+}
+
+public function destroy(Role $role)
+{
+    $role->delete();
+
+    return redirect()->route('roles.index')->with('success', 'Rol eliminado correctamente.');
+}
+
 }

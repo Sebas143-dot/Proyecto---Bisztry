@@ -36,21 +36,65 @@
                         <td><span class="badge info">{{ $role->guard_name }}</span></td>
                         <td class="text-right">
                             <div class="actions-buttons">
-                                <a href="#" class="btn-icon warning" title="Editar Rol"><i class="fas fa-edit"></i></a>
+                                {{-- Botón Editar --}}
+                                <a href="{{ route('roles.edit', $role->id) }}" class="btn-icon warning" title="Editar Rol">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                {{-- Botón Eliminar --}}
+                                <form id="delete-form-{{ $role->id }}" action="{{ route('roles.destroy', $role->id) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" class="btn-icon danger" title="Eliminar Rol"
+                                        onclick="confirmDelete({{ $role->id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="4" class="text-center">No hay roles creados.</td></tr>
+                    <tr>
+                        <td colspan="4" class="text-center">No hay roles creados.</td>
+                    </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
 <style>
-.actions-buttons { display: flex; justify-content: flex-end; gap: 0.5rem; }
-.btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; color: white; border: none; cursor: pointer;}
-.btn-icon.warning { background-color: var(--warning-color); }
+.actions-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    text-decoration: none;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+.btn-icon.warning {
+    background-color: var(--warning-color);
+}
+.btn-icon.danger {
+    background-color: var(--danger-color);
+}
 </style>
+
+<script>
+    function confirmDelete(roleId) {
+        if (confirm('¿Estás seguro de que deseas eliminar este rol? Esta acción no se puede deshacer.')) {
+            document.getElementById('delete-form-' + roleId).submit();
+        }
+    }
+</script>
 @endsection
