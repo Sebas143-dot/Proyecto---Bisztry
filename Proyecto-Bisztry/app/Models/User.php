@@ -7,11 +7,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles; // Asegúrate de que esto siga aquí
+use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+// --- 1. IMPORTAMOS LA INTERFAZ DE JWT ---
+use Tymon\JWTAuth\Contracts\JWTSubject;
+
+// --- 2. AÑADIMOS LA IMPLEMENTACIÓN DE LA INTERFAZ ---
+class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles; // Y aquí también
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -22,7 +26,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'is_admin', // Mantenemos nuestra columna de super-admin
+        'is_admin',
     ];
 
     /**
@@ -42,6 +46,32 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        // 'password' => 'hashed', // <-- ESTA ES LA LÍNEA QUE HEMOS ELIMINADO
     ];
+
+    // --- 3. AÑADIMOS LOS MÉTODOS REQUERIDOS POR JWT ---
+
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     *
+     * @return mixed
+     */
+    public function getJWTIdentifier()
+    {
+        // Este método le dice a JWT qué columna usar para identificar al usuario.
+        // Usamos la clave primaria (el 'id' del usuario), que es lo estándar.
+        return $this->getKey();
+    }
+
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims()
+    {
+        // Aquí podemos añadir información extra ("claims") al token.
+        // Por ahora, lo dejamos vacío, pero en el futuro podrías añadir
+        // el nombre del usuario o sus roles para tenerlos a mano en el frontend.
+        return [];
+    }
 }

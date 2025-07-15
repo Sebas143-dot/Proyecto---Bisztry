@@ -40,6 +40,16 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // --- INICIO DE LA MEJORA ---
+        // Aquí añadimos un nuevo "guardia" para nuestra API.
+        // Le decimos a Laravel que cuando una ruta use el 'guard' de 'api',
+        // debe usar el driver 'jwt' que acabamos de instalar.
+        'api' => [
+            'driver' => 'jwt',
+            'provider' => 'users',
+        ],
+        // --- FIN DE LA MEJORA ---
     ],
 
     /*
