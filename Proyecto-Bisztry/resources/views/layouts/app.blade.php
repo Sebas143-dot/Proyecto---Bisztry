@@ -23,13 +23,13 @@
 </head>
 <body class="font-sans antialiased">
     <div class="container bg-gray-100">
+        <!-- Botón hamburguesa solo visible en móvil -->
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menú">
+            <i class="fas fa-bars"></i>
+        </button>
         <!-- ============ MENÚ LATERAL (SIDEBAR) =========== -->
         <aside class="sidebar">
             <div class="sidebar-header"><div class="logo"><i class="fas fa-shopping-bag"></i><h2>BIZSTRY</h2></div></div>
-            
-            {{-- ======================================================= --}}
-            {{--         INICIO DE LA MEJORA DEL SIDEBAR               --}}
-            {{-- ======================================================= --}}
             <div class="sidebar-content">
                 <nav class="sidebar-nav">
                     <ul>
@@ -71,9 +71,6 @@
                     </div>
                 </div>
             </div>
-            {{-- ======================================================= --}}
-            {{--              FIN DE LA MEJORA                           --}}
-            {{-- ======================================================= --}}
         </aside>
 
         <!-- ============ CONTENIDO PRINCIPAL ============== -->
@@ -93,10 +90,31 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="{{ asset('js/script.js') }}"></script>
     @stack('scripts')
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const sidebar = document.querySelector('.sidebar');
+
+            hamburgerBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+            });
+
+            // Opcional: cerrar el menú al hacer clic fuera del sidebar
+            document.addEventListener('click', function(e) {
+                if (
+                    sidebar.classList.contains('open') &&
+                    !sidebar.contains(e.target) &&
+                    e.target !== hamburgerBtn
+                ) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
 
-{{-- Estilos para el nuevo menú de usuario --}}
 <style>
     .sidebar-content {
         display: flex;
@@ -109,7 +127,7 @@
     }
     .sidebar-footer {
         padding: 1rem;
-        margin-top: auto; /* Empuja el footer hacia abajo */
+        margin-top: auto;
     }
     .footer-divider {
         margin: 1rem 0;
@@ -140,8 +158,6 @@
     }
     .user-details h4 { font-size: 0.875rem; font-weight: 600; margin: 0; }
     .user-details span { font-size: 0.75rem; color: var(--text-secondary); }
-    
-    /* --- NUEVOS ESTILOS PARA EL BOTÓN DE CERRAR SESIÓN --- */
     .logout-button {
         display: flex;
         align-items: center;
@@ -159,8 +175,8 @@
         transition: var(--transition-fast);
     }
     .logout-button:hover {
-        background-color: #fee2e2; /* Un fondo rojo muy claro */
-        color: #b91c1c; /* Un rojo más oscuro al pasar el mouse */
+        background-color: #fee2e2;
+        color: #b91c1c;
     }
     .logout-button:hover i {
         color: #b91c1c;
@@ -171,5 +187,156 @@
         text-align: center;
         color: var(--text-secondary);
         transition: var(--transition-fast);
+    }
+    /* --- ESTILOS PARA EL BOTÓN HAMBURGUESA --- */
+    .hamburger-btn {
+        display: none;
+        position: fixed;
+        top: 1.5rem;
+        left: 1.5rem;
+        z-index: 2000;
+        background: var(--primary-color, #2563eb);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        width: 48px;
+        height: 48px;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.7rem;
+        cursor: pointer;
+        transition: background 0.2s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    }
+    .hamburger-btn:active,
+    .hamburger-btn:focus {
+        background: #0056b3;
+    }
+    .hamburger-btn i {
+        font-size: 1.7rem;
+    }
+    /* ===================== RESPONSIVE DESIGN ===================== */
+    @media (max-width: 900px) {
+        .hamburger-btn {
+            display: flex;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            height: 100vh;
+            z-index: 1099;
+            transition: left 0.18s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 2px 0 8px rgba(0,0,0,0.12);
+            width: 220px;
+            min-width: 0;
+            border-radius: 0 1rem 1rem 0;
+            margin-bottom: 0;
+        }
+        .sidebar.open {
+            left: 0;
+        }
+        .main-content {
+            margin-left: 0;
+            width: 100%;
+        }
+        .container {
+            flex-direction: column;
+        }
+    }
+    @media (max-width: 600px) {
+        .sidebar-header {
+            padding: 0.75rem 0.5rem;
+        }
+        .logo {
+            gap: 0.5rem;
+        }
+        .sidebar-header h2 {
+            font-size: 1rem;
+            margin-left: 0.5rem;
+        }
+        .sidebar-nav ul {
+            flex-direction: column;
+            gap: 0.25rem;
+            padding: 0;
+        }
+        .sidebar-nav li {
+            width: 100%;
+            margin-bottom: 0.25rem;
+        }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border-radius: 0.5rem;
+            transition: background 0.2s;
+            min-width: 0;
+            word-break: break-word;
+        }
+        .sidebar-nav a i {
+            font-size: 1.2rem;
+            min-width: 1.5rem;
+            text-align: center;
+        }
+    }
+    @media (max-width: 400px) {
+        .sidebar-nav a span {
+            display: none;
+        }
+        .sidebar-header h2 {
+            display: none;
+        }
+    }
+    .container {
+        display: flex;
+        min-height: 100vh;
+    }
+    .sidebar {
+        min-width: 220px;
+        max-width: 260px;
+        background: #fff;
+        border-radius: 0 1rem 1rem 0;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+    }
+    .main-content {
+        flex: 1;
+        margin-left: 260px;
+        padding: 2rem;
+        background: #f9fafb;
+        min-width: 0;
+    }
+    @media (max-width: 900px) {
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+        }
+        .sidebar {
+            max-width: 100%;
+        }
+    }
+    @media (max-width: 900px) {
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+        .table-responsive table {
+            width: 100%;
+            min-width: 600px;
+        }
+        form, .card, .box, .panel {
+            width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box;
+        }
+        input, select, textarea, button {
+            width: 100%;
+            box-sizing: border-box;
+        }
+    }
+    img {
+        max-width: 100%;
+        height: auto;
     }
 </style>
