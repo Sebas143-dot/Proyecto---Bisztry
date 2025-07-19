@@ -3,22 +3,26 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // Importa el Facade DB
+use App\Models\Audit; // Asegúrate de que esta es la ruta correcta a tu modelo Audit
 
 class AuditController extends Controller
 {
     /**
      * Muestra una lista de registros de auditoría.
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
-        // Recuperar los registros de auditoría de la base de datos
-        // Ordenamos por la fecha de creación de forma descendente y paginamos los resultados
-        $audits = DB::table('audits')
-                    ->orderBy('created_at', 'desc')
-                    ->paginate(20); // Muestra 20 registros por página
+        // Recuperar los registros de auditoría usando el modelo Eloquent 'Audit'.
+        // Es crucial usar 'with(['user', 'auditable'])' para cargar ambas relaciones
+        // (el usuario que realizó la acción y el modelo que fue auditado)
+        // Esto evita múltiples consultas a la base de datos (problema de N+1 queries).
+        $audits = Audit::with(['user', 'auditable']) // <-- ¡Aquí está el cambio clave!
+                       ->latest() // Ordena por 'created_at' de forma descendente
+                       ->paginate(20); // Muestra 20 registros por página
 
-        // Pasar los registros de auditoría a una vista
+        // Pasa los registros de auditoría paginados a la vista.
         return view('audits.index', compact('audits'));
     }
 }
