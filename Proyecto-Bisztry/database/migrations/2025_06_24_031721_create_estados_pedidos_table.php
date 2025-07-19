@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('estados_pedidos', function (Blueprint $table) {
             $table->string('esta_cod', 3)->primary();
-            $table->string('esta__detalle', 25)->nullable();
+            $table->string('esta_detalle', 25)->nullable();
         });
     }
 
