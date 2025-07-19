@@ -9,13 +9,18 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
+// Añadido para auditoría
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+
 // --- 1. IMPORTAMOS LA INTERFAZ DE JWT ---
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 // --- 2. AÑADIMOS LA IMPLEMENTACIÓN DE LA INTERFAZ ---
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable implements JWTSubject, AuditableContract // <-- Añadido AuditableContract aquí
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use Auditable; // <-- Añadido
 
     /**
      * The attributes that are mass assignable.
@@ -57,8 +62,6 @@ class User extends Authenticatable implements JWTSubject
      */
     public function getJWTIdentifier()
     {
-        // Este método le dice a JWT qué columna usar para identificar al usuario.
-        // Usamos la clave primaria (el 'id' del usuario), que es lo estándar.
         return $this->getKey();
     }
 
@@ -69,9 +72,6 @@ class User extends Authenticatable implements JWTSubject
      */
     public function getJWTCustomClaims()
     {
-        // Aquí podemos añadir información extra ("claims") al token.
-        // Por ahora, lo dejamos vacío, pero en el futuro podrías añadir
-        // el nombre del usuario o sus roles para tenerlos a mano en el frontend.
         return [];
     }
 }

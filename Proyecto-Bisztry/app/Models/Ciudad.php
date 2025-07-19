@@ -5,9 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Ciudad extends Model
+// Añadido para auditoría
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+
+class Ciudad extends Model implements AuditableContract // <-- Añadido
 {
     use HasFactory;
+    use Auditable; // <-- Añadido
 
     protected $table = 'ciudades';
     protected $primaryKey = 'ciud_cod';

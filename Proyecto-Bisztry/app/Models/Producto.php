@@ -5,9 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Producto extends Model
+// Añadido para auditoría
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+
+class Producto extends Model implements AuditableContract // <-- Añadido
 {
     use HasFactory;
+    use Auditable; // <-- Añadido
 
     protected $table = 'productos';
     protected $primaryKey = 'prod_cod';
