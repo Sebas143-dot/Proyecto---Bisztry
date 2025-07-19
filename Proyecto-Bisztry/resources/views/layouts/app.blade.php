@@ -47,6 +47,12 @@
                         @endcan
                         @role('Super-Admin')
                         <li class="{{ request()->routeIs('users.*') || request()->routeIs('roles.*') ? 'active' : '' }}"><a href="{{ route('users.index') }}"><i class="fas fa-cog fa-fw"></i><span>Usuarios y Roles</span></a></li>
+                        {{-- ENLACE PARA AUDITORÍA --}}
+                        <li class="{{ request()->routeIs('audits.*') ? 'active' : '' }}">
+                            <a href="{{ route('audits.index') }}">
+                                <i class="fas fa-history fa-fw"></i><span>Auditoría</span> {{-- Usé 'fa-history' para el icono, puedes cambiarlo --}}
+                            </a>
+                        </li>
                         @endrole
                     </ul>
                 </nav>

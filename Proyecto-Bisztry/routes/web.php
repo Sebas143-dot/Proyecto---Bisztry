@@ -14,6 +14,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\VarianteProdController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AuditController;
 
 /*
 |--------------------------------------------------------------------------
@@ -103,6 +104,7 @@ Route::resource('pedidos', PedidoController::class)->except(['create']);
     Route::middleware(['role.superadmin'])->group(function () {
         Route::resource('roles', RoleController::class)->except(['show']);
         Route::resource('users', UserController::class)->except(['show']);
+        Route::get('/audits', [AuditController::class, 'index'])->name('audits.index');
     });
     // ===================================================================
     
