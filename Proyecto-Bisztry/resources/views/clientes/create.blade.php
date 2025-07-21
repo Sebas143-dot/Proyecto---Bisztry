@@ -2,94 +2,235 @@
 
 @section('title', 'Nuevo Cliente')
 @section('page-title', 'Crear Nuevo Cliente')
-@section('page-description', 'Completa el formulario para agregar un nuevo cliente.')
+@section('page-description', 'Completa el formulario para agregar un nuevo cliente a tu base de datos.')
 
 @section('content')
-<div class="card">
-    <div class="card-header">
-        <h3>Formulario de Cliente</h3>
-        <p>Los campos con * son obligatorios.</p>
-    </div>
-    <div class="card-body">
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <strong>¡Ups!</strong> Hubo algunos problemas con tu entrada.<br><br>
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+<div class="create-layout">
+
+    {{-- COLUMNA IZQUIERDA: FORMULARIO PRINCIPAL --}}
+    <div class="form-column">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-user-plus text-primary mr-3"></i>Formulario de Registro de Cliente</h3>
+                <p class="text-secondary">Los campos marcados con * son obligatorios.</p>
             </div>
-        @endif
-
-        <form action="{{ route('clientes.store') }}" method="POST">
-            @csrf
-            
-            {{-- ======================================================= --}}
-            {{--         INICIO DE LA MEJORA DE FUNCIONALIDAD            --}}
-            {{-- ======================================================= --}}
-            {{-- 1. CAMPO OCULTO: Este campo le dice al controlador a dónde volver --}}
-            {{-- después de guardar. Si venimos desde el asistente de pedidos, tendrá un valor. --}}
-            <input type="hidden" name="_redirect_to" value="{{ $redirect_to ?? '' }}">
-            {{-- ======================================================= --}}
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="clie_nombre">Nombre *</label>
-                    <input type="text" id="clie_nombre" name="clie_nombre" value="{{ old('clie_nombre') }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="clie_apellido">Apellido *</label>
-                    <input type="text" id="clie_apellido" name="clie_apellido" value="{{ old('clie_apellido') }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="clie_email">Email *</label>
-                    <input type="email" id="clie_email" name="clie_email" value="{{ old('clie_email') }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="clie_telefono">Teléfono</label>
-                    <input type="text" id="clie_telefono" name="clie_telefono" value="{{ old('clie_telefono') }}">
-                </div>
-                <div class="form-group">
-                    <label for="ciud_cod">Ciudad *</label>
-                    <select id="ciud_cod" name="ciud_cod" required>
-                        <option value="">Seleccione una ciudad</option>
-                        @foreach($ciudades as $ciudad)
-                            <option value="{{ $ciudad->ciud_cod }}" {{ old('ciud_cod') == $ciudad->ciud_cod ? 'selected' : '' }}>
-                                {{ $ciudad->ciud_nombre }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="clie_fecha_nac">Fecha de Nacimiento</label>
-                    <input type="date" id="clie_fecha_nac" name="clie_fecha_nac" value="{{ old('clie_fecha_nac') }}">
-                </div>
-                <div class="form-group full-width">
-                    <label for="clie_direccion">Dirección</label>
-                    <textarea id="clie_direccion" name="clie_direccion" rows="3">{{ old('clie_direccion') }}</textarea>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar Cliente</button>
+            <div class="card-body">
                 
-                {{-- ======================================================= --}}
-                {{-- 2. ENLACE DINÁMICO: El botón "Cancelar" ahora es más inteligente. --}}
-                {{-- Si hay una URL de redirección, vuelve allí. Si no, vuelve a la lista de clientes. --}}
-                <a href="{{ $redirect_to ?? route('clientes.index') }}" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
-                {{-- ======================================================= --}}
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <div class="alert-icon-wrapper">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h4 class="alert-title">¡Ups! Revisa tu información</h4>
+                            <ul class="error-list">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                @endif
+
+                <form action="{{ route('clientes.store') }}" method="POST">
+                    @csrf
+                    {{-- Campo oculto que gestiona la redirección --}}
+                    <input type="hidden" name="_redirect_to" value="{{ $redirect_to ?? '' }}">
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="clie_nombre">Nombre *</label>
+                            <input type="text" id="clie_nombre" name="clie_nombre" class="form-control" value="{{ old('clie_nombre') }}" required placeholder="Ej: Ana">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="clie_apellido">Apellido *</label>
+                            <input type="text" id="clie_apellido" name="clie_apellido" class="form-control" value="{{ old('clie_apellido') }}" required placeholder="Ej: Torres">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="clie_email">Email *</label>
+                            <div class="input-group">
+                                <span class="input-group-icon"><i class="fas fa-envelope"></i></span>
+                                <input type="email" id="clie_email" name="clie_email" class="form-control" value="{{ old('clie_email') }}" required placeholder="ejemplo@correo.com">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="clie_telefono">Teléfono</label>
+                            <div class="input-group">
+                                 <span class="input-group-icon"><i class="fas fa-phone"></i></span>
+                                <input type="tel" id="clie_telefono" name="clie_telefono" class="form-control" value="{{ old('clie_telefono') }}" placeholder="Ej: 0987654321">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="ciud_cod">Ciudad *</label>
+                            <select id="ciud_cod" name="ciud_cod" class="form-control" required>
+                                <option value="" disabled {{ old('ciud_cod') ? '' : 'selected' }}>-- Seleccione una ciudad --</option>
+                                @foreach($ciudades as $ciudad)
+                                    <option value="{{ $ciudad->ciud_cod }}" {{ old('ciud_cod') == $ciudad->ciud_cod ? 'selected' : '' }}>
+                                        {{ $ciudad->ciud_nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="clie_fecha_nac">Fecha de Nacimiento</label>
+                            <input type="date" id="clie_fecha_nac" name="clie_fecha_nac" class="form-control" value="{{ old('clie_fecha_nac') }}">
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label for="clie_direccion">Dirección</label>
+                            <textarea id="clie_direccion" name="clie_direccion" class="form-control" rows="3" placeholder="Ej: Av. Principal 123 y Calle Secundaria">{{ old('clie_direccion') }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{{ $redirect_to ?? route('clientes.index') }}" class="btn btn-outline">
+                            <i class="fas fa-times mr-2"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-2"></i> Guardar Cliente
+                        </button>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
+    </div>
+
+    {{-- COLUMNA DERECHA: TARJETA DE INFORMACIÓN --}}
+    <div class="info-column">
+        <div class="info-card-sticky">
+            <div class="info-card">
+                <div class="info-card-icon-wrapper">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <h4 class="info-card-title">¡Un nuevo cliente!</h4>
+                <p class="info-card-text">
+                    Añadir un nuevo cliente es el primer paso para construir una relación duradera. Asegúrate de que los datos, especialmente el email y el teléfono, sean correctos para futuras comunicaciones.
+                </p>
+                <div class="info-card-highlight">
+                    <strong>Consejo:</strong> Una dirección completa facilita mucho la logística de los envíos.
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <style>
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+/* === Paleta y Variables Base === */
+:root {
+    --primary-color: #3b82f6; --primary-dark: #2563eb;
+    --danger-color: #ef4444; --danger-bg: #fee2e2; --danger-border: #fca5a5;
+    --info-color: #0ea5e9; --info-bg: #e0f2fe;
+    --bg-main: #f9fafb; --bg-card: #ffffff;
+    --border-color: #e5e7eb; --text-primary: #1f2937;
+    --text-secondary: #6b7280; --text-on-primary: #ffffff;
+    --radius-lg: 0.75rem;
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --transition-fast: all 0.2s ease-in-out;
+}
+
+/* === Layout de 2 Columnas === */
+.create-layout {
+    display: grid;
+    grid-template-columns: 1fr; /* Una columna por defecto */
+    gap: 2rem;
+    max-width: 80rem; /* Ancho máximo del layout */
+    margin: 0 auto;
+}
+@media (min-width: 1024px) {
+    .create-layout {
+        grid-template-columns: 2fr 1fr; /* Dos columnas en pantallas grandes */
+    }
+}
+
+/* === Estilos de Tarjeta y Formulario === */
+.card {
+    background-color: var(--bg-card); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md); border: 1px solid var(--border-color);
+}
+.card-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
+.card-header h3 { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; margin-bottom: 0.25rem; }
+.card-header p { margin: 0; color: var(--text-secondary); }
+.card-body { padding: 2rem; }
+.mr-2 { margin-right: 0.5rem; }
+.mr-3 { margin-right: 0.75rem; }
+
+/* Alerta de Errores */
+.alert { display: flex; gap: 1rem; padding: 1rem; border-radius: var(--radius-lg); margin-bottom: 2rem; }
+.alert-danger { background-color: var(--danger-bg); border: 1px solid var(--danger-border); color: #991b1b; }
+.alert-icon-wrapper { font-size: 1.5rem; }
+.alert-title { font-weight: 700; color: #b91c1c; margin: 0 0 0.5rem 0; }
+.error-list { margin: 0; padding-left: 1.25rem; }
+.error-list li { margin-bottom: 0.25rem; }
+
+/* Grid y Grupos de Formulario */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.75rem; }
 .form-group { display: flex; flex-direction: column; }
 .form-group.full-width { grid-column: 1 / -1; }
-.form-group label { margin-bottom: 0.5rem; font-weight: 600; }
-.form-group input, .form-group select, .form-group textarea { padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 1rem; }
-.form-actions { display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1.5rem; }
+.form-group label { font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; }
+.form-control {
+    width: 100%; padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+    background-color: var(--bg-main); font-size: 1rem; transition: var(--transition-fast);
+}
+.form-control:focus {
+    outline: none; background-color: var(--bg-card);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+.input-group { display: flex; }
+.input-group-icon {
+    display: flex; align-items: center; padding: 0 1rem;
+    background-color: var(--border-color); border: 1px solid var(--border-color);
+    border-right: none; border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    color: var(--text-secondary);
+}
+.input-group .form-control { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+.input-group .form-control:focus { z-index: 10; position: relative; }
+
+/* Acciones del Formulario */
+.form-actions {
+    display: flex; gap: 1rem; justify-content: flex-end;
+    border-top: 1px solid var(--border-color); padding-top: 2rem; margin-top: 2rem;
+}
+.btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 600; padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg); text-decoration: none;
+    transition: var(--transition-fast); cursor: pointer; border: 1px solid transparent;
+}
+.btn-primary { background-color: var(--primary-color); color: var(--text-on-primary); }
+.btn-primary:hover { background-color: var(--primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-outline { color: var(--text-secondary); background-color: transparent; border-color: var(--border-color); }
+.btn-outline:hover { background-color: var(--border-color); color: var(--text-primary); }
+
+/* Columna de Información */
+.info-column .info-card-sticky { position: sticky; top: 2rem; }
+.info-card {
+    background-color: var(--info-bg); border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--info-color) 30%, transparent);
+    padding: 2rem; text-align: center;
+}
+.info-card-icon-wrapper {
+    width: 60px; height: 60px; margin: 0 auto 1rem;
+    border-radius: 50%; background-color: var(--bg-card);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--info-color); font-size: 1.75rem;
+}
+.info-card-title { font-weight: 700; font-size: 1.125rem; color: var(--text-primary); margin-bottom: 0.5rem; }
+.info-card-text { color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6; }
+.info-card-highlight {
+    background-color: color-mix(in srgb, var(--info-color) 15%, transparent);
+    padding: 0.75rem; border-radius: var(--radius-lg); font-size: 0.875rem;
+}
+
+/* Responsividad para el grid del formulario */
+@media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr; }
+}
 </style>
 @endsection

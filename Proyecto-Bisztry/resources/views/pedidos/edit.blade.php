@@ -1,61 +1,106 @@
 @extends('layouts.app')
 
 @section('title', 'Editar Pedido')
-@section('page-title', 'Editar Pedido #PED-' . $pedido->pedi_id)
-@section('page-description', 'Modifica los productos o el estado de este pedido.')
+@section('page-title', 'Editor de Pedido')
+@section('page-description', 'Modifica los productos, el estado o los detalles del pedido #PED-' . $pedido->pedi_id)
 
 @section('content')
+{{-- El div principal ya no necesita escuchar eventos, Alpine lo controlará todo desde adentro --}}
 <div x-data="gestorPedidosEditar()">
     <form action="{{ route('pedidos.update', $pedido) }}" method="POST">
         @csrf
         @method('PUT')
         <input type="hidden" name="carrito" :value="JSON.stringify(carrito)">
 
-        <div class="pedido-grid">
-            {{-- Columna Izquierda: Carrito y Buscador --}}
-            <div class="col-span-2">
-                <div class="card">
-                    <div class="card-header"><h3>1. Editar Carrito de Compra</h3></div>
-                    <div class="card-body">
-                        <div class="form-group mb-4" wire:ignore>
-                            <label for="buscador-variantes">Añadir más productos</label>
-                            <select id="buscador-variantes" style="width: 100%;"><option></option></select>
+        <div class="edit-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3><span class="step-number">1</span> Modificar Productos del Pedido</h3>
+                </div>
+                <div class="card-body">
+                    <div class="add-product-form">
+                        <div class="form-group flex-grow">
+                            <label for="buscador-variantes">Buscar producto para añadir</label>
+                            <div wire:ignore>
+                               {{-- MODIFICADO: Añadimos 'x-ref' para que Alpine pueda encontrar este elemento --}}
+                               <select id="buscador-variantes" x-ref="buscador" style="width: 100%;"><option></option></select>
+                            </div>
                         </div>
-                        <hr>
-                        <div class="carrito-items mt-4">
-                            <template x-if="carrito.length === 0"><p class="empty-carrito"><i class="fas fa-exclamation-triangle"></i><br>El carrito no puede estar vacío.</p></template>
-                            <template x-for="item in carrito" :key="item.var_id">
-                                <div class="carrito-item-mejorado">
-                                    <div class="item-info-principal"><strong x-text="item.nombre"></strong><button type="button" @click="quitarDelCarrito(item.var_id)" class="btn-icon danger-sm"><i class="fas fa-times"></i></button></div>
-                                    <div class="item-calculo">
-                                        <input type="number" min="1" :max="item.stock_max" x-model.number="item.cantidad" @input="validarStock(item)"><span>x</span>
-                                        <span class="precio-unitario" x-text="`$${item.precio.toFixed(2)}`"></span><span>=</span>
-                                        <strong class="subtotal-linea" x-text="`$${(item.cantidad * item.precio).toFixed(2)}`"></strong>
-                                    </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label> 
+                            <button type="button" @click="confirmarAnadirProducto()" :disabled="!productoSeleccionado" class="btn btn-secondary w-full">
+                                <i class="fas fa-plus mr-2"></i> Añadir al Pedido
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <hr class="separator">
+
+                    <div class="cart-items-container">
+                        <template x-if="carrito.length === 0">
+                            <div class="empty-cart-message">
+                                <i class="fas fa-exclamation-circle fa-3x"></i>
+                                <p class="font-bold mt-2">El pedido no puede quedar vacío</p>
+                                <p class="text-secondary">Añade al menos un producto para poder guardar.</p>
+                            </div>
+                        </template>
+                        
+                        <template x-for="item in carrito" :key="item.var_id">
+                            <div class="cart-item">
+                                <div class="item-details">
+                                    <p class="item-name" x-text="item.nombre"></p>
+                                    <p class="item-price">Precio Unitario: <span x-text="`$${item.precio.toFixed(2)}`"></span></p>
                                 </div>
-                            </template>
-                        </div>
+                                <div class="item-controls">
+                                    <div class="quantity-stepper">
+                                        <button type="button" @click="decrementar(item)" class="stepper-btn">&minus;</button>
+                                        <input type="number" :max="item.stock_max" min="1" x-model.number="item.cantidad" @input="validarStock(item)" class="quantity-input">
+                                        <button type="button" @click="incrementar(item)" class="stepper-btn">&plus;</button>
+                                    </div>
+                                    <div class="item-subtotal">
+                                        <strong x-text="`$${(item.cantidad * item.precio).toFixed(2)}`"></strong>
+                                    </div>
+                                    <button type="button" @click="quitarDelCarrito(item.var_id)" class="btn-remove" title="Quitar producto">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
-            {{-- Columna Derecha: Resumen y Guardado --}}
-            <div class="col-span-1">
-                <div class="card sticky-card">
-                    <div class="card-header"><h3>2. Actualizar y Finalizar</h3></div>
+
+            <div class="sticky-card">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><span class="step-number">2</span> Actualizar Estado y Guardar</h3>
+                    </div>
                     <div class="card-body">
                         <div class="form-group">
-                            <label for="esta_cod">Cambiar estado a: *</label>
-                            <select id="esta_cod" name="esta_cod" required>
+                            <label for="esta_cod">Estado del Pedido *</label>
+                            <select id="esta_cod" name="esta_cod" class="form-control" required>
                                 @foreach($estados as $estado)
-                                    <option value="{{ $estado->esta_cod }}" {{ $pedido->esta_cod == $estado->esta_cod ? 'selected' : '' }}>{{ $estado->esta__detalle }}</option>
+                                    <option value="{{ $estado->esta_cod }}" @if($pedido->esta_cod == $estado->esta_cod) selected @endif>
+                                        {{ $estado->esta__detalle }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
-                        <hr class="my-4">
-                        <div class="total-line"><span>Nuevo Subtotal:</span><strong x-text="`$${subtotal.toFixed(2)}`"></strong></div>
-                        <div class="form-actions mt-4">
-                            <a href="{{ route('pedidos.show', $pedido) }}" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
-                            <button type="submit" class="btn btn-primary" :disabled="carrito.length === 0"><i class="fas fa-save"></i> Guardar Cambios</button>
+
+                        <div class="totals-section">
+                             <div class="total-line">
+                                <span>Nuevo Subtotal Productos</span>
+                                <strong class="text-lg" x-text="`$${subtotal.toFixed(2)}`"></strong>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button type="submit" class="btn btn-primary w-full" :disabled="carrito.length === 0">
+                                <i class="fas fa-save mr-2"></i> Guardar Cambios
+                            </button>
+                            <a href="{{ route('pedidos.show', $pedido) }}" class="btn btn-outline w-full">
+                                <i class="fas fa-times mr-2"></i> Cancelar Edición
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -63,22 +108,72 @@
         </div>
     </form>
 </div>
-{{-- Estilos reutilizados --}}
-<style> .pedido-grid{display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;align-items:start}.col-span-2{grid-column:span 2}.col-span-1{grid-column:span 1}.sticky-card{position:sticky;top:2rem}.carrito-items{display:flex;flex-direction:column;gap:.75rem;margin-bottom:1rem;min-height:100px}.empty-carrito{text-align:center;color:var(--text-secondary);padding:2rem 0}.carrito-item-mejorado{background:var(--bg-color);padding:.75rem;border-radius:var(--radius-md);border:1px solid var(--border-color)}.item-info-principal{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem}.item-info-principal strong{font-weight:600;font-size:.9rem}.item-calculo{display:flex;align-items:center;gap:.5rem;font-size:.9rem}.item-calculo input{width:60px;text-align:center;padding:.5rem;border:1px solid var(--border-color);border-radius:var(--radius-md)}.total-line{display:flex;justify-content:space-between;font-weight:600;font-size:1.1rem}.my-4{margin-top:1rem;margin-bottom:1rem}</style>
 @endsection
 
+{{-- El CSS no necesita cambios --}}
+@push('styles')
+<style>
+:root { --primary-color: #3b82f6; --primary-dark: #2563eb; --secondary-color: #6b7280; --secondary-dark: #4b5563; --danger-color: #ef4444; --danger-dark: #dc2626; --bg-main: #f9fafb; --bg-card: #ffffff; --bg-subtle: #f3f4f6; --border-color: #e5e7eb; --border-focus: var(--primary-color); --text-primary: #1f2937; --text-secondary: #6b7280; --text-on-primary: #ffffff; --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05); --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); --radius-md: 0.5rem; --transition-fast: all 0.2s ease-in-out; }
+.edit-grid { display: grid; grid-template-columns: 2.5fr 1.5fr; gap: 2rem; align-items: start; }
+.card { background-color: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
+.card-header { padding: 1rem 1.5rem; background-color: var(--bg-subtle); border-bottom: 1px solid var(--border-color); }
+.card-header h3 { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.75rem; }
+.step-number { background-color: var(--primary-color); color: var(--text-on-primary); border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
+.card-body { padding: 1.5rem; }
+.sticky-card { position: sticky; top: 2rem; }
+.separator { border: 0; height: 1px; background-color: var(--border-color); margin: 1.5rem 0; }
+.add-product-form { display: flex; gap: 1rem; align-items: flex-end; }
+.flex-grow { flex-grow: 1; }
+.cart-items-container { display: flex; flex-direction: column; gap: 1rem; min-height: 150px; }
+.cart-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-main); padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); transition: var(--transition-fast); }
+.cart-item:hover { border-color: color-mix(in srgb, var(--primary-color) 40%, transparent); box-shadow: var(--shadow-sm); }
+.item-details { flex-grow: 1; }
+.item-name { font-weight: 600; color: var(--text-primary); }
+.item-price { font-size: 0.875rem; color: var(--text-secondary); }
+.item-controls { display: flex; align-items: center; gap: 1rem; }
+.item-subtotal { font-weight: 700; color: var(--text-primary); font-size: 1.1rem; min-width: 80px; text-align: right; }
+.empty-cart-message { text-align: center; padding: 2rem; color: var(--text-secondary); border: 2px dashed var(--border-color); border-radius: var(--radius-md); }
+.quantity-stepper { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+.stepper-btn { background: var(--bg-subtle); border: none; color: var(--text-primary); padding: 0.5rem 0.75rem; cursor: pointer; font-size: 1rem; transition: background-color 0.2s; }
+.stepper-btn:hover { background-color: var(--border-color); }
+.stepper-btn:first-child { border-right: 1px solid var(--border-color); border-radius: 0.4rem 0 0 0.4rem; }
+.stepper-btn:last-child { border-left: 1px solid var(--border-color); border-radius: 0 0.4rem 0.4rem 0; }
+.quantity-input { width: 60px; text-align: center; border: none; padding: 0.5rem; font-size: 1rem; font-weight: 500; -moz-appearance: textfield; }
+.quantity-input::-webkit-outer-spin-button, .quantity-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.btn-remove { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.5rem; border-radius: 50%; width: 36px; height: 36px; }
+.btn-remove:hover { background-color: var(--danger-color); color: var(--text-on-primary); }
+.form-group { display: flex; flex-direction: column; }
+.form-group label { font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; }
+.form-control { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); transition: var(--transition-fast); font-size: 1rem; }
+.form-control:focus, .select2-container--default.select2-container--open .select2-selection--single { outline: 2px solid transparent; border-color: var(--border-focus) !important; box-shadow: 0 0 0 2px color-mix(in srgb, var(--border-focus) 25%, transparent); }
+.select2-container .select2-selection--single { height: calc(1.5em + 1.5rem + 2px); padding: 0.75rem 1rem; }
+.select2-container .select2-selection--single .select2-selection__rendered { padding-left: 0; line-height: 1.5rem; }
+.select2-container .select2-selection--single .select2-selection__arrow { top: 50%; transform: translateY(-50%); }
+.totals-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); display: flex; flex-direction: column; gap: 0.75rem; }
+.total-line { display: flex; justify-content: space-between; align-items: center; font-size: 1rem; }
+.total-line strong { color: var(--text-primary); font-weight: 700; }
+.text-lg { font-size: 1.25rem; }
+.action-buttons { margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.btn { display: flex; align-items: center; justify-content: center; font-weight: 600; padding: 0.8rem 1rem; border-radius: var(--radius-md); text-decoration: none; transition: var(--transition-fast); font-size: 1rem; cursor: pointer; border: 1px solid transparent; }
+.btn:disabled { background-color: var(--border-color) !important; color: var(--text-secondary) !important; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+.btn-primary { background-color: var(--primary-color); color: var(--text-on-primary); }
+.btn-primary:not(:disabled):hover { background-color: var(--primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-secondary { background-color: var(--secondary-color); color: var(--text-on-primary); }
+.btn-secondary:not(:disabled):hover { background-color: var(--secondary-dark); }
+.btn-outline { background-color: transparent; color: var(--primary-color); border-color: var(--primary-color); }
+.btn-outline:hover { background-color: color-mix(in srgb, var(--primary-color) 10%, transparent); }
+.w-full { width: 100%; }
+.mr-2 { margin-right: 0.5rem; }
+@media (max-width: 1024px) { .edit-grid { grid-template-columns: 1fr; } .item-controls { gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; } .item-subtotal { min-width: auto; } }
+</style>
+@endpush
+
+{{-- MODIFICADO: Toda la lógica de inicialización y comunicación está ahora dentro de Alpine.js --}}
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const variantesParaSelect2 = {!! json_encode($variantesParaSelect2) !!};
-        $('#buscador-variantes').select2({ placeholder: 'Buscar para añadir más...', data: variantesParaSelect2, allowClear: true });
-        $('#buscador-variantes').on('select2:select', e => {
-            document.querySelector('[x-data]').__x.anadirAlCarrito(e.params.data.datos_completos);
-            $(e.currentTarget).val(null).trigger('change');
-        });
-    });
     function gestorPedidosEditar() {
         return {
+            // == ESTADO DEL COMPONENTE ==
             carrito: {!! json_encode($pedido->detalles->map(function($detalle) {
                 return [
                     'var_id' => $detalle->var_id,
@@ -88,14 +183,49 @@
                     'stock_max' => (int)$detalle->variante->var_stok_actual + (int)$detalle->cantidad
                 ];
             })) !!},
-            cantidadOriginal(varianteId) {
-                const itemOriginal = {!! json_encode($pedido->detalles->keyBy('var_id')) !!};
-                return itemOriginal[varianteId] ? parseInt(itemOriginal[varianteId].cantidad) : 0;
+            
+            productoSeleccionado: null,
+
+            // == INICIALIZACIÓN ==
+            // 'init()' es una función especial de Alpine que se ejecuta cuando el componente se carga.
+            init() {
+                // Creamos una referencia a 'this' para usarla dentro de los callbacks de jQuery.
+                const component = this;
+
+                // Inicializamos Select2 en el elemento que marcamos con x-ref="buscador".
+                $(this.$refs.buscador).select2({
+                    placeholder: 'Buscar por nombre o código de producto...',
+                    data: {!! json_encode($variantesParaSelect2) !!},
+                    allowClear: true
+                });
+
+                // Creamos el listener de Select2. Ahora está DENTRO de Alpine.
+                $(this.$refs.buscador).on('select2:select', function(e) {
+                    // Llamamos a la función de Alpine directamente.
+                    component.seleccionarProducto(e.params.data.datos_completos);
+                });
+
+                // Hacemos lo mismo para el evento de limpiar la selección.
+                $(this.$refs.buscador).on('select2:unselect', function(e) {
+                    component.seleccionarProducto(null);
+                });
+            },
+
+            // == MÉTODOS Y LÓGICA ==
+            seleccionarProducto(datos) {
+                this.productoSeleccionado = datos;
+            },
+            confirmarAnadirProducto() {
+                if (!this.productoSeleccionado) return;
+                this.anadirAlCarrito(this.productoSeleccionado);
+                this.productoSeleccionado = null;
+                // Reseteamos el valor del Select2 usando su API
+                $(this.$refs.buscador).val(null).trigger('change');
             },
             anadirAlCarrito(variante) {
                 const itemExistente = this.carrito.find(item => item.var_id === variante.var_id);
-                if(itemExistente) {
-                    if(itemExistente.cantidad < itemExistente.stock_max) itemExistente.cantidad++;
+                if (itemExistente) {
+                    if (itemExistente.cantidad < itemExistente.stock_max) itemExistente.cantidad++;
                 } else {
                     this.carrito.push({
                         var_id: variante.var_id, nombre: variante.nombre, cantidad: 1,
@@ -103,12 +233,17 @@
                     });
                 }
             },
+            quitarDelCarrito(varianteId) { this.carrito = this.carrito.filter(item => item.var_id !== varianteId); },
+            incrementar(item) { if (item.cantidad < item.stock_max) item.cantidad++; },
+            decrementar(item) { if (item.cantidad > 1) item.cantidad--; },
             validarStock(item) {
                 if (isNaN(item.cantidad) || item.cantidad < 1) item.cantidad = 1;
                 if (item.cantidad > item.stock_max) item.cantidad = item.stock_max;
             },
-            quitarDelCarrito(varianteId) { this.carrito = this.carrito.filter(item => item.var_id !== varianteId); },
-            get subtotal() { return this.carrito.reduce((acc, item) => acc + (parseInt(item.cantidad) * parseFloat(item.precio)), 0); },
+            get subtotal() {
+                if (!this.carrito || this.carrito.length === 0) return 0;
+                return this.carrito.reduce((acc, item) => acc + (parseInt(item.cantidad) * parseFloat(item.precio)), 0);
+            },
         }
     }
 </script>

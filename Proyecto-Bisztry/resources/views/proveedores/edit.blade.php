@@ -1,150 +1,212 @@
 @extends('layouts.app')
 
 @section('title', 'Editar Proveedor')
-@section('page-title', 'Editar Proveedor')
+@section('page-title', 'Editor de Proveedor')
 @section('page-description', 'Actualiza la información de: ' . $proveedor->prov_nombre)
 
 @section('content')
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Formulario de Edición</h3>
+<div class="edit-layout">
+
+    {{-- COLUMNA IZQUIERDA: FORMULARIO PRINCIPAL --}}
+    <div class="form-column">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-truck-alt text-primary mr-3"></i>Formulario de Edición de Proveedor</h3>
+                <p class="text-secondary">Los campos marcados con * son obligatorios.</p>
+            </div>
+            <div class="card-body">
+                
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <div class="alert-icon-wrapper">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h4 class="alert-title">¡Ups! Revisa la información</h4>
+                            <ul class="error-list">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                @endif
+
+                <form action="{{ route('proveedores.update', $proveedor->prov_ruc) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="form-grid">
+                        
+                        <div class="form-group">
+                            <label for="prov_ruc">RUC (No editable)</label>
+                            <input type="text" id="prov_ruc" name="prov_ruc" class="form-control-plaintext" value="{{ $proveedor->prov_ruc }}" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prov_nombre">Nombre del Proveedor / Razón Social *</label>
+                            <input type="text" id="prov_nombre" name="prov_nombre" class="form-control @error('prov_nombre') is-invalid @enderror" value="{{ old('prov_nombre', $proveedor->prov_nombre) }}" required placeholder="Ej: Textiles Andinos S.A.">
+                            @error('prov_nombre')<span class="text-danger-inline">{{ $message }}</span>@enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prov_contacto">Nombre del Contacto</label>
+                            <input type="text" id="prov_contacto" name="prov_contacto" class="form-control" value="{{ old('prov_contacto', $proveedor->prov_contacto) }}" placeholder="Ej: Carlos Solís">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prov_telefono">Teléfono</label>
+                            <div class="input-group">
+                                <span class="input-group-icon"><i class="fas fa-phone"></i></span>
+                                <input type="tel" id="prov_telefono" name="prov_telefono" class="form-control" value="{{ old('prov_telefono', $proveedor->prov_telefono) }}" maxlength="10" placeholder="Ej: 0987654321">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label for="prov_email">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-icon"><i class="fas fa-envelope"></i></span>
+                                <input type="email" id="prov_email" name="prov_email" class="form-control @error('prov_email') is-invalid @enderror" value="{{ old('prov_email', $proveedor->prov_email) }}" placeholder="contacto@empresa.com">
+                            </div>
+                             @error('prov_email')<span class="text-danger-inline">{{ $message }}</span>@enderror
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{{ route('proveedores.index') }}" class="btn btn-outline">
+                            <i class="fas fa-times mr-2"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-2"></i> Actualizar Proveedor
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        {{-- El formulario apunta a la ruta de actualización, pasando el RUC del proveedor --}}
-        <form action="{{ route('proveedores.update', $proveedor->prov_ruc) }}" method="POST">
-            @csrf
-            @method('PUT')
 
-            {{-- Usamos un grid para un layout más limpio y adaptable --}}
-            <div class="form-grid">
-
-                <!-- Campo RUC (No editable) -->
-                <div class="form-group">
-                    <label for="prov_ruc">RUC del Proveedor (No editable)</label>
-                    <input type="text" id="prov_ruc" name="prov_ruc" class="form-control-plaintext"
-                           value="{{ $proveedor->prov_ruc }}" readonly>
+    {{-- COLUMNA DERECHA: TARJETA DE INFORMACIÓN --}}
+    <div class="info-column">
+        <div class="info-card-sticky">
+            <div class="info-card">
+                <div class="info-card-icon-wrapper">
+                    <i class="fas fa-building"></i>
                 </div>
-
-                <!-- Campo Nombre -->
-                <div class="form-group">
-                    <label for="prov_nombre">Nombre del Proveedor <span class="required">*</span></label>
-                    <input type="text" id="prov_nombre" name="prov_nombre"
-                           class="form-control @error('prov_nombre') is-invalid @enderror"
-                           value="{{ old('prov_nombre', $proveedor->prov_nombre) }}" required>
-                    @error('prov_nombre')
-                        <span class="invalid-feedback">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                <!-- Campo Contacto -->
-                <div class="form-group">
-                    <label for="prov_contacto">Nombre del Contacto</label>
-                    <input type="text" id="prov_contacto" name="prov_contacto"
-                           class="form-control @error('prov_contacto') is-invalid @enderror"
-                           value="{{ old('prov_contacto', $proveedor->prov_contacto) }}">
-                    @error('prov_contacto')
-                        <span class="invalid-feedback">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                <!-- Campo Teléfono -->
-                <div class="form-group">
-                    <label for="prov_telefono">Teléfono</label>
-                    <input type="tel" id="prov_telefono" name="prov_telefono"
-                           class="form-control @error('prov_telefono') is-invalid @enderror"
-                           value="{{ old('prov_telefono', $proveedor->prov_telefono) }}" maxlength="10">
-                    @error('prov_telefono')
-                        <span class="invalid-feedback">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                <!-- Campo Email -->
-                <div class="form-group full-width">
-                    <label for="prov_email">Correo Electrónico</label>
-                    <input type="email" id="prov_email" name="prov_email"
-                           class="form-control @error('prov_email') is-invalid @enderror"
-                           value="{{ old('prov_email', $proveedor->prov_email) }}">
-                    @error('prov_email')
-                        <span class="invalid-feedback">{{ $message }}</span>
-                    @enderror
+                <h4 class="info-card-title">{{ $proveedor->prov_nombre }}</h4>
+                <p class="info-card-text">
+                    Estás editando la información de un socio comercial existente. Los cambios se reflejarán en todo el sistema.
+                </p>
+                <div class="info-card-highlight">
+                    <strong>RUC:</strong> {{ $proveedor->prov_ruc }}
                 </div>
             </div>
-
-            {{-- Botones de acción del formulario --}}
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Actualizar Proveedor
-                </button>
-                <a href="{{ route('proveedores.index') }}" class="btn btn-outline">
-                    <i class="fas fa-arrow-left"></i> Cancelar y Volver
-                </a>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-{{-- Estilos para mejorar la apariencia del formulario. Puedes moverlos a tu archivo CSS principal. --}}
 <style>
-    .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
+/* === Paleta y Variables Base === */
+:root {
+    --primary-color: #3b82f6; --primary-dark: #2563eb;
+    --danger-color: #ef4444; --danger-bg: #fee2e2; --danger-border: #fca5a5;
+    --info-color: #6366f1; --info-bg: #eef2ff;
+    --bg-main: #f9fafb; --bg-card: #ffffff;
+    --border-color: #e5e7eb; --text-primary: #1f2937;
+    --text-secondary: #6b7280; --text-on-primary: #ffffff;
+    --radius-lg: 0.75rem;
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --transition-fast: all 0.2s ease-in-out;
+}
 
-    .form-group.full-width {
-        grid-column: 1 / -1;
-    }
+/* === Layout de 2 Columnas === */
+.edit-layout { display: grid; grid-template-columns: 1fr; gap: 2rem; max-width: 80rem; margin: 0 auto; }
+@media (min-width: 1024px) { .edit-layout { grid-template-columns: 2fr 1fr; } }
 
-    .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-        color: #374151;
-    }
+/* === Estilos de Tarjeta y Formulario === */
+.card { background-color: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--border-color); }
+.card-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
+.card-header h3 { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; margin-bottom: 0.25rem; }
+.card-header p { margin: 0; color: var(--text-secondary); }
+.card-body { padding: 2rem; }
+.mr-2 { margin-right: 0.5rem; }
+.mr-3 { margin-right: 0.75rem; }
 
-    .form-control, .form-control-plaintext {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #d1d5db;
-        border-radius: 0.5rem;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
+/* Alerta de Errores */
+.alert { display: flex; gap: 1rem; padding: 1rem; border-radius: var(--radius-lg); margin-bottom: 2rem; }
+.alert-danger { background-color: var(--danger-bg); border: 1px solid var(--danger-border); color: #991b1b; }
+.alert-icon-wrapper { font-size: 1.5rem; }
+.alert-title { font-weight: 700; color: #b91c1c; margin: 0 0 0.5rem 0; }
+.error-list { margin: 0; padding-left: 1.25rem; }
+.error-list li { margin-bottom: 0.25rem; }
 
-    .form-control:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-        outline: none;
-    }
-    
-    .form-control-plaintext {
-        background-color: #f3f4f6;
-        cursor: not-allowed;
-        border-color: transparent;
-    }
+/* Grid y Grupos de Formulario */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.75rem; }
+.form-group { display: flex; flex-direction: column; }
+.form-group.full-width { grid-column: 1 / -1; }
+.form-group label { font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; }
+.form-control, .form-control-plaintext {
+    width: 100%; padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+    font-size: 1rem; transition: var(--transition-fast);
+}
+.form-control { background-color: var(--bg-main); }
+.form-control:focus {
+    outline: none; background-color: var(--bg-card);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+.form-control.is-invalid { border-color: var(--danger-color); }
+.form-control-plaintext { background-color: #e5e7eb; color: var(--text-secondary); cursor: not-allowed; }
+.input-group { display: flex; }
+.input-group-icon {
+    display: flex; align-items: center; padding: 0 1rem;
+    background-color: #e5e7eb; border: 1px solid var(--border-color);
+    border-right: none; border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    color: var(--text-secondary);
+}
+.input-group .form-control { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+.input-group .form-control:focus { z-index: 10; position: relative; }
+.text-danger-inline { font-size: 0.8rem; color: var(--danger-color); margin-top: 0.5rem; }
 
-    .is-invalid {
-        border-color: #ef4444;
-    }
+/* Acciones del Formulario */
+.form-actions {
+    display: flex; gap: 1rem; justify-content: flex-end;
+    border-top: 1px solid var(--border-color); padding-top: 2rem; margin-top: 2rem;
+}
+.btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 600; padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg); text-decoration: none;
+    transition: var(--transition-fast); cursor: pointer; border: 1px solid transparent;
+}
+.btn-primary { background-color: var(--primary-color); color: var(--text-on-primary); }
+.btn-primary:hover { background-color: var(--primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-outline { color: var(--text-secondary); background-color: transparent; border-color: var(--border-color); }
+.btn-outline:hover { background-color: var(--border-color); color: var(--text-primary); }
 
-    .invalid-feedback {
-        color: #ef4444;
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-        display: block;
-    }
-    
-    .required {
-        color: #ef4444;
-        margin-left: 2px;
-    }
+/* Columna de Información */
+.info-column .info-card-sticky { position: sticky; top: 2rem; }
+.info-card {
+    background-color: var(--info-bg); border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--info-color) 30%, transparent);
+    padding: 2rem; text-align: center;
+}
+.info-card-icon-wrapper {
+    width: 60px; height: 60px; margin: 0 auto 1rem;
+    border-radius: 50%; background-color: var(--bg-card);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--info-color); font-size: 1.75rem;
+}
+.info-card-title { font-weight: 700; font-size: 1.125rem; color: var(--text-primary); margin-bottom: 0.5rem; }
+.info-card-text { color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6; }
+.info-card-highlight {
+    background-color: color-mix(in srgb, var(--info-color) 15%, transparent);
+    padding: 0.75rem; border-radius: var(--radius-lg); font-size: 0.875rem;
+}
 
-    .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid #e5e7eb;
-    }
+/* Responsividad para el grid del formulario */
+@media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr; }
+}
 </style>
 @endsection

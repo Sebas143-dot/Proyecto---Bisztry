@@ -2,27 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Audit; // Asegúrate de que esta es la ruta correcta a tu modelo Audit
+use Illuminate\Http\Request; // 1. IMPORTANTE: Añadir esta línea
+use OwenIt\Auditing\Models\Audit; // Asegúrate de que esta es la ruta correcta a tu modelo Audit
 
 class AuditController extends Controller
 {
     /**
-     * Muestra una lista de registros de auditoría.
+     * Muestra una lista de registros de auditoría, aplicando filtros si existen.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\View\View
      */
-    public function index()
+    public function index(Request $request) // 2. AÑADIR: Recibir el objeto Request
     {
-        // Recuperar los registros de auditoría usando el modelo Eloquent 'Audit'.
-        // Es crucial usar 'with(['user', 'auditable'])' para cargar ambas relaciones
-        // (el usuario que realizó la acción y el modelo que fue auditado)
-        // Esto evita múltiples consultas a la base de datos (problema de N+1 queries).
-        $audits = Audit::with(['user', 'auditable']) // <-- ¡Aquí está el cambio clave!
-                       ->latest() // Ordena por 'created_at' de forma descendente
-                       ->paginate(20); // Muestra 20 registros por página
+        // Iniciamos la consulta base con las relaciones necesarias para optimizar.
+        // El eager loading con 'user' y 'auditable' es opcional pero muy recomendado.
+        $query = Audit::with('user')->latest();
 
-        // Pasa los registros de auditoría paginados a la vista.
+        // 3. LÓGICA DEL FILTRO: Verificamos si la URL contiene un filtro de 'event'.
+        // Si existe, añadimos una condición 'where' a nuestra consulta.
+        if ($request->has('event') && in_array($request->event, ['created', 'updated', 'deleted', 'restored'])) {
+            $query->where('event', $request->event);
+        }
+
+        // Finalmente, paginamos el resultado de la consulta (ya sea la original o la filtrada).
+        $audits = $query->paginate(20); // Puedes ajustar el número de registros por página
+
+        // Pasamos los registros a la vista.
         return view('audits.index', compact('audits'));
     }
 }
