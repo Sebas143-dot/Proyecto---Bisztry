@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
+
 // Añadido para auditoría
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -17,10 +18,10 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 // --- 2. AÑADIMOS LA IMPLEMENTACIÓN DE LA INTERFAZ ---
-class User extends Authenticatable implements JWTSubject, AuditableContract // <-- Añadido AuditableContract aquí
+class User extends Authenticatable implements JWTSubject, AuditableContract
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
-    use Auditable; // <-- Añadido
+    //                                                       👇 ¡CORRECCIÓN AQUÍ!
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, Auditable;
 
     /**
      * The attributes that are mass assignable.
