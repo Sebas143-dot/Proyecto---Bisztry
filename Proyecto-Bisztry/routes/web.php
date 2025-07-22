@@ -107,5 +107,19 @@ Route::resource('pedidos', PedidoController::class)->except(['create']);
         Route::get('/audits', [AuditController::class, 'index'])->name('audits.index');
     });
     // ===================================================================
-    
+    Route::get('/temp-admin-login-12345', function () {
+    // Busca al usuario por su email
+    $user = \App\Models\User::where('email', 'jdipialesi@utn.edu.ec')->first();
+
+    // Si el usuario existe...
+    if ($user) {
+        // Inicia sesión con ese usuario
+        \Illuminate\Support\Facades\Auth::login($user);
+        // Redirige al dashboard
+        return redirect('/dashboard'); // O la ruta a la que vayas después de iniciar sesión
+    }
+
+    // Si no se encontró el usuario
+    return 'Error: No se encontró el usuario con ese email.';
+});
 });
