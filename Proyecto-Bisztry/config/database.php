@@ -66,8 +66,8 @@ return [
         'pgsql' => [
             'driver' => 'pgsql',
             // --- INICIO DE LA CORRECCIÓN ---
-            // Le decimos a Laravel: "Usa la variable de entorno DB_HOST. Si no existe,
-            // entonces usa la variable PGHOST que nos da Railway". Hacemos lo mismo para las demás.
+            // Le decimos a Laravel que use la variable de entorno DB_HOST. Si no existe,
+            // entonces que use la variable PGHOST que nos da Railway. Hacemos lo mismo para las demás.
             'host' => env('DB_HOST', env('PGHOST', '127.0.0.1')),
             'port' => env('DB_PORT', env('PGPORT', '5432')),
             'database' => env('DB_DATABASE', env('PGDATABASE', 'forge')),
