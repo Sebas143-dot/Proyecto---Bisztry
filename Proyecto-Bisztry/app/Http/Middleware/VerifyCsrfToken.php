@@ -12,6 +12,6 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
-    ];
+    'create-super-admin-user-a1b2c3d4e5',
+];
 }
