@@ -21,17 +21,26 @@ use App\Http\Controllers\AuditController;
 | Web Routes
 |--------------------------------------------------------------------------
 */
-Route::post('/create-super-admin-user-a1b2c3d4e5', function (Illuminate\Http\Request $request) {
-    $userExists = \App\Models\User::where('email', $request->input('email'))->exists();
-    if ($userExists) {
-        return response()->json(['message' => 'Error: El usuario ya existe.'], 409);
+Route::post('/create-super-admin-user-a1b2c3d4e5', function (Request $request) {
+    // Busca si el usuario ya existe para no crear duplicados
+    $user = User::where('email', $request->input('email'))->first();
+
+    if (!$user) {
+        // 1. Si no existe, lo crea
+        $user = User::create([
+            'name'     => $request->input('name'),
+            'email'    => $request->input('email'),
+            'password' => Hash::make($request->input('password')),
+        ]);
     }
-    $user = \App\Models\User::create([
-        'name' => $request->input('name'),
-        'email' => $request->input('email'),
-        'password' => \Illuminate\Support\Facades\Hash::make($request->input('password')),
-    ]);
-    return response()->json(['message' => '¡Usuario Superadmin creado con éxito!', 'user' => $user], 201);
+
+    // 2. Le asignamos el rol usando el nombre exacto de tu tabla
+    $user->assignRole('Super-Admin');
+
+    return response()->json([
+        'message' => '¡Usuario Super-Admin creado/actualizado y rol asignado con éxito!',
+        'user' => $user->load('roles') // Carga los roles para verlos en la respuesta
+    ], 200);
 });
 
 // Carga las rutas de autenticación (login, registro, logout, etc.)
