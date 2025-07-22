@@ -33,26 +33,4 @@ Route::group([
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/user-profile', [AuthController::class, 'userProfile']);
-
-
-
-    Route::post('/create-super-admin-user-a1b2c3d4e5', function (Request $request) {
-    // Valida que el email no exista para no crear duplicados
-    $userExists = User::where('email', $request->input('email'))->exists();
-    if ($userExists) {
-        return response()->json(['message' => 'Error: El usuario ya existe.'], 409);
-    }
-
-    // Crea el nuevo usuario
-    $user = User::create([
-        'name' => $request->input('name'),
-        'email' => $request->input('email'),
-        'password' => Hash::make($request->input('password')),
-    ]);
-
-    return response()->json([
-        'message' => '¡Usuario Superadmin creado con éxito!',
-        'user' => $user
-    ], 201);
-});
 });
