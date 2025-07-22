@@ -1,8 +1,14 @@
 <?php
 
+// --- 1. IMPORTACIONES NECESARIAS ---
+// Se añaden las clases que faltaban para las rutas temporales.
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
-// 1. Importamos todos los controladores que usaremos
+// --- Controladores ---
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProveedorController;
@@ -20,7 +26,16 @@ use App\Http\Controllers\AuditController;
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
+|
+| Aquí se definen todas las rutas de tu aplicación.
+|
 */
+
+// --- 2. RUTAS TEMPORALES DE DIAGNÓSTICO ---
+// Estas rutas se colocan fuera de cualquier grupo para que sean públicas.
+// ¡Recuerda eliminarlas cuando termines!
+
+// Ruta para crear el Super-Admin con Postman
 Route::post('/create-super-admin-user-a1b2c3d4e5', function (Request $request) {
     $user = User::firstOrCreate(
         ['email' => $request->input('email')],
@@ -28,119 +43,76 @@ Route::post('/create-super-admin-user-a1b2c3d4e5', function (Request $request) {
             'name'     => $request->input('name'),
             'email'    => $request->input('email'),
             'password' => Hash::make($request->input('password')),
-            'is_admin' => false, // <-- ¡AÑADIMOS ESTA LÍNEA PARA SOLUCIONAR EL ERROR!
+            'is_admin' => false,
         ]
     );
-
-    // Si llegamos aquí, el usuario se creó con éxito.
-    // Ahora, le asignamos el rol de Super-Admin
     $user->assignRole('Super-Admin');
-
-    return response()->json([
-        'message' => '¡Usuario Super-Admin creado y rol asignado con éxito!',
-        'user' => $user->load('roles')
-    ], 200);
+    return response()->json(['message' => 'Usuario Super-Admin creado y rol asignado.', 'user' => $user->load('roles')], 200);
 });
 
-// Carga las rutas de autenticación (login, registro, logout, etc.)
+// Ruta para iniciar sesión automáticamente como admin
+Route::get('/temp-admin-login-12345', function () {
+    $user = User::where('email', 'jdipialesi@utn.edu.ec')->first();
+    if ($user) {
+        Auth::login($user);
+        return redirect('/'); // Corregido: Redirige a la raíz (tu dashboard)
+    }
+    return 'Error: No se encontró el usuario con ese email.';
+});
+
+
+// --- 3. RUTAS DE AUTENTICACIÓN ---
+// Carga las rutas de login, registro, logout, etc. que vienen con Breeze/Laravel UI.
 require __DIR__.'/auth.php';
 
 
-// Todas las rutas dentro de este grupo requerirán que el usuario esté logueado.
+// --- 4. RUTAS PROTEGIDAS (REQUIEREN INICIO DE SESIÓN) ---
+// Todas las rutas dentro de este grupo requerirán que el usuario esté autenticado.
 Route::middleware(['auth'])->group(function () {
-    Route::resource('reportes', ReporteController::class)->only(['index']);
-    
-    // --- AÑADIR ESTAS DOS LÍNEAS ---
-    Route::get('/reportes/exportar/pdf', [ReporteController::class, 'exportarPDF'])->name('reportes.exportar.pdf');
-    Route::get('/reportes/exportar/excel', [ReporteController::class, 'exportarExcel'])->name('reportes.exportar.excel');
 
-    // Ruta Principal
+    // Ruta Principal (Tu dashboard está en la URL raíz '/')
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Dashboards por rol
-Route::get('/ventas/dashboard', function () {
-    return view('ventas.dashboard');
-})->name('ventas.dashboard');
+    // Dashboards específicos por rol
+    Route::get('/ventas/dashboard', fn() => view('ventas.dashboard'))->name('ventas.dashboard');
+    Route::get('/contabilidad/dashboard', fn() => view('contabilidad.dashboard'))->name('contabilidad.dashboard');
+    Route::get('/publicidad/dashboard', fn() => view('publicidad.dashboard'))->name('publicidad.dashboard');
+    Route::get('/produccion/dashboard', fn() => view('produccion.dashboard'))->name('produccion.dashboard');
+    Route::get('/logistica/dashboard', fn() => view('logistica.dashboard'))->name('logistica.dashboard');
+    Route::get('/auditoria/dashboard', fn() => view('auditoria.dashboard'))->name('auditoria.dashboard');
+    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-Route::get('/contabilidad/dashboard', function () {
-    return view('contabilidad.dashboard');
-})->name('contabilidad.dashboard');
-
-Route::get('/publicidad/dashboard', function () {
-    return view('publicidad.dashboard');
-})->name('publicidad.dashboard');
-
-Route::get('/produccion/dashboard', function () {
-    return view('produccion.dashboard');
-})->name('produccion.dashboard');
-
-Route::get('/logistica/dashboard', function () {
-    return view('logistica.dashboard');
-})->name('logistica.dashboard');
-
-Route::get('/auditoria/dashboard', function () {
-    return view('auditoria.dashboard');
-})->name('auditoria.dashboard');
-
-Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-
-
-    // Rutas del Perfil de Usuario (de Breeze)
+    // Rutas del Perfil de Usuario
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // --- RUTAS DE NUESTRA APLICACIÓN (Accesibles para cualquier usuario logueado) ---
+    // --- Rutas de la Aplicación ---
     Route::resource('clientes', ClienteController::class);
     Route::resource('proveedores', ProveedorController::class);
     Route::resource('productos', ProductoController::class);
     Route::resource('productos.variantes', VarianteProdController::class)->except(['index', 'show'])->shallow();
     Route::resource('categorias', CategoriaController::class)->except(['show', 'create', 'edit']);
-    Route::resource('pedidos', PedidoController::class);
-    Route::resource('reportes', ReporteController::class)->only(['index']);
-    // ===================================================================
-// --- INICIO DE RUTAS PARA GESTIÓN DE PEDIDOS (CON ASISTENTE) ---
-// ===================================================================
-// Rutas específicas para cada paso del asistente de creación
-Route::get('/pedidos/crear/paso-1', [PedidoController::class, 'createStep1'])->name('pedidos.create.step1');
-Route::post('/pedidos/crear/paso-1', [PedidoController::class, 'postStep1'])->name('pedidos.create.step1.post');
-Route::get('/pedidos/crear/paso-2', [PedidoController::class, 'createStep2'])->name('pedidos.create.step2');
-Route::post('/pedidos/carrito/add', [PedidoController::class, 'addToCart'])->name('pedidos.cart.add');
-Route::post('/pedidos/carrito/remove', [PedidoController::class, 'removeFromCart'])->name('pedidos.cart.remove');
-Route::get('/pedidos/crear/paso-3', [PedidoController::class, 'createStep3'])->name('pedidos.create.step3');
 
-// Rutas estándar del CRUD de Pedidos (index, show, edit, etc.), excepto 'create'.
-Route::resource('pedidos', PedidoController::class)->except(['create']);
-// ===================================================================
-    // ===================================================================
-    // ---      RUTAS PROTEGIDAS PARA SUPER-ADMINISTRADOR (CORREGIDO)    ---
-    // ===================================================================
-    // Usamos el middleware que viene con el paquete spatie/laravel-permission.
-    // La sintaxis 'role:Super-Admin' le dice: "solo deja pasar a usuarios con el rol 'Super-Admin'".
-// En routes/web.php
-// ...
-    // --- RUTAS PROTEGIDAS (VERSIÓN DE DIAGNÓSTICO) ---
-    // Cambiamos 'role:Super-Admin' por nuestro alias 'role.superadmin'
-    Route::middleware(['role.superadmin'])->group(function () {
+    // Rutas de Pedidos (con asistente)
+    Route::get('/pedidos/crear/paso-1', [PedidoController::class, 'createStep1'])->name('pedidos.create.step1');
+    Route::post('/pedidos/crear/paso-1', [PedidoController::class, 'postStep1'])->name('pedidos.create.step1.post');
+    Route::get('/pedidos/crear/paso-2', [PedidoController::class, 'createStep2'])->name('pedidos.create.step2');
+    Route::post('/pedidos/carrito/add', [PedidoController::class, 'addToCart'])->name('pedidos.cart.add');
+    Route::post('/pedidos/carrito/remove', [PedidoController::class, 'removeFromCart'])->name('pedidos.cart.remove');
+    Route::get('/pedidos/crear/paso-3', [PedidoController::class, 'createStep3'])->name('pedidos.create.step3');
+    Route::resource('pedidos', PedidoController::class)->except(['create']);
+
+    // Rutas de Reportes
+    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
+    Route::get('/reportes/exportar/pdf', [ReporteController::class, 'exportarPDF'])->name('reportes.exportar.pdf');
+    Route::get('/reportes/exportar/excel', [ReporteController::class, 'exportarExcel'])->name('reportes.exportar.excel');
+
+    // --- Rutas Protegidas solo para Super-Admin ---
+    // Corregido: Se usa el middleware 'role:Super-Admin' que es el estándar de Spatie.
+    Route::middleware(['role:Super-Admin'])->group(function () {
         Route::resource('roles', RoleController::class)->except(['show']);
         Route::resource('users', UserController::class)->except(['show']);
         Route::get('/audits', [AuditController::class, 'index'])->name('audits.index');
     });
-    // ===================================================================
-    Route::get('/temp-admin-login-12345', function () {
-    // Busca al usuario por su email
-    $user = \App\Models\User::where('email', 'jdipialesi@utn.edu.ec')->first();
-
-    // Si el usuario existe...
-    if ($user) {
-        // Inicia sesión con ese usuario
-        \Illuminate\Support\Facades\Auth::login($user);
-        // Redirige al dashboard
-        return redirect('/dashboard'); // O la ruta a la que vayas después de iniciar sesión
-    }
-
-    // Si no se encontró el usuario
-    return 'Error: No se encontró el usuario con ese email.';
-});
-
 });
