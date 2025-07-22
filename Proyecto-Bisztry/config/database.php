@@ -63,7 +63,7 @@ return [
             ]) : [],
         ],
 
-        'pgsql' => [
+'pgsql' => [
             'driver' => 'pgsql',
             // --- INICIO DE LA CORRECCIÓN ---
             // Le decimos a Laravel que use la variable de entorno DB_HOST. Si no existe,
