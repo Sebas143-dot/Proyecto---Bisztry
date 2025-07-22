@@ -22,25 +22,16 @@ use App\Http\Controllers\AuditController;
 |--------------------------------------------------------------------------
 */
 Route::post('/create-super-admin-user-a1b2c3d4e5', function (Request $request) {
-    // Busca si el usuario ya existe para no crear duplicados
-    $user = User::where('email', $request->input('email'))->first();
-
-    if (!$user) {
-        // 1. Si no existe, lo crea
-        $user = User::create([
+    // Simplemente crea el usuario y devuelve una respuesta.
+    $user = User::firstOrCreate(
+        ['email' => $request->input('email')],
+        [
             'name'     => $request->input('name'),
-            'email'    => $request->input('email'),
             'password' => Hash::make($request->input('password')),
-        ]);
-    }
+        ]
+    );
 
-    // 2. Le asignamos el rol usando el nombre exacto de tu tabla
-    $user->assignRole('Super-Admin');
-
-    return response()->json([
-        'message' => '¡Usuario Super-Admin creado/actualizado y rol asignado con éxito!',
-        'user' => $user->load('roles') // Carga los roles para verlos en la respuesta
-    ], 200);
+    return response()->json(['message' => 'Usuario básico creado con éxito', 'user' => $user], 201);
 });
 
 // Carga las rutas de autenticación (login, registro, logout, etc.)
