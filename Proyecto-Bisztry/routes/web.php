@@ -114,6 +114,9 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('roles', RoleController::class)->except(['show']);
         Route::resource('users', UserController::class)->except(['show']);
         Route::get('/audits', [AuditController::class, 'index'])->name('audits.index');
+        Route::get('/admin-test', function () {
+        return '<h1>ACCESO CONCEDIDO: La prueba del rol Super-Admin funciono!</h1>';
+    });
     });
 });
 // --- Rutas de Auditoría (para todos los usuarios autenticados) ---
