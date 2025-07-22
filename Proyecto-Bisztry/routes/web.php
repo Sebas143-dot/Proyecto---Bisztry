@@ -116,3 +116,4 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/audits', [AuditController::class, 'index'])->name('audits.index');
     });
 });
+// --- Rutas de Auditoría (para todos los usuarios autenticados) ---
