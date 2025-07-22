@@ -63,7 +63,7 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-'role' => \App\Http\Middleware\DebugRoleMiddleware::class, // Usamos nuestro "micrófono"
+        'role' => \Spatie\Permission\Middlewares\RoleMiddleware::class,
         // En app/Http/Kernel.php, dentro de protected $middlewareAliases
     'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
