@@ -22,16 +22,24 @@ use App\Http\Controllers\AuditController;
 |--------------------------------------------------------------------------
 */
 Route::post('/create-super-admin-user-a1b2c3d4e5', function (Request $request) {
-    // Simplemente crea el usuario y devuelve una respuesta.
     $user = User::firstOrCreate(
         ['email' => $request->input('email')],
         [
             'name'     => $request->input('name'),
+            'email'    => $request->input('email'),
             'password' => Hash::make($request->input('password')),
+            'is_admin' => false, // <-- ¡AÑADIMOS ESTA LÍNEA PARA SOLUCIONAR EL ERROR!
         ]
     );
 
-    return response()->json(['message' => 'Usuario básico creado con éxito', 'user' => $user], 201);
+    // Si llegamos aquí, el usuario se creó con éxito.
+    // Ahora, le asignamos el rol de Super-Admin
+    $user->assignRole('Super-Admin');
+
+    return response()->json([
+        'message' => '¡Usuario Super-Admin creado y rol asignado con éxito!',
+        'user' => $user->load('roles')
+    ], 200);
 });
 
 // Carga las rutas de autenticación (login, registro, logout, etc.)
