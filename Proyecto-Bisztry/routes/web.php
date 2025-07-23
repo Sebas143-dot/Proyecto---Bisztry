@@ -1,14 +1,8 @@
 <?php
 
-// --- 1. IMPORTACIONES NECESARIAS ---
-// Se añaden las clases que faltaban para las rutas temporales.
+// --- 1. IMPORTACIONES DE CONTROLADORES ---
+// Se mantienen solo los controladores que están en uso en las rutas web.
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
-
-// --- Controladores ---
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProveedorController;
@@ -24,54 +18,29 @@ use App\Http\Controllers\AuditController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Rutas Web
 |--------------------------------------------------------------------------
 |
-| Aquí se definen todas las rutas de tu aplicación.
+| Aquí se definen todas las rutas web para la aplicación. Estas rutas
+| son cargadas por el RouteServiceProvider y todas están dentro del
+| grupo de middleware "web".
 |
 */
 
-// --- 2. RUTAS TEMPORALES DE DIAGNÓSTICO ---
-// Estas rutas se colocan fuera de cualquier grupo para que sean públicas.
-// ¡Recuerda eliminarlas cuando termines!
-
-// Ruta para crear el Super-Admin con Postman
-Route::post('/create-super-admin-user-a1b2c3d4e5', function (Request $request) {
-    $user = User::firstOrCreate(
-        ['email' => $request->input('email')],
-        [
-            'name'     => $request->input('name'),
-            'email'    => $request->input('email'),
-            'password' => Hash::make($request->input('password')),
-            'is_admin' => false,
-        ]
-    );
-    $user->assignRole('Super-Admin');
-    return response()->json(['message' => 'Usuario Super-Admin creado y rol asignado.', 'user' => $user->load('roles')], 200);
-});
-
-// Ruta para iniciar sesión automáticamente como admin
-Route::get('/temp-admin-login-12345', function () {
-    $user = User::where('email', 'jdipialesi@utn.edu.ec')->first();
-    if ($user) {
-        Auth::login($user);
-        return redirect('/'); // Corregido: Redirige a la raíz (tu dashboard)
-    }
-    return 'Error: No se encontró el usuario con ese email.';
-});
-
-
-// --- 3. RUTAS DE AUTENTICACIÓN ---
-// Carga las rutas de login, registro, logout, etc. que vienen con Breeze/Laravel UI.
+// --- 2. RUTAS DE AUTENTICACIÓN ---
+// Carga las rutas de login, logout, reseteo de contraseña, etc.
+// El registro público está deshabilitado dentro de 'auth.php'.
 require __DIR__.'/auth.php';
 
 
-// --- 4. RUTAS PROTEGIDAS (REQUIEREN INICIO DE SESIÓN) ---
+// --- 3. RUTAS PROTEGIDAS (REQUIEREN INICIO DE SESIÓN) ---
 // Todas las rutas dentro de este grupo requerirán que el usuario esté autenticado.
 Route::middleware(['auth'])->group(function () {
 
-    // Ruta Principal (Tu dashboard está en la URL raíz '/')
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    // Ruta Principal del Dashboard
+    // Se define tanto / como /dashboard para apuntar al dashboard principal.
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index']);
 
     // Dashboards específicos por rol
     Route::get('/ventas/dashboard', fn() => view('ventas.dashboard'))->name('ventas.dashboard');
@@ -87,14 +56,14 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // --- Rutas de la Aplicación ---
+    // --- Rutas de Recursos de la Aplicación (CRUDs) ---
     Route::resource('clientes', ClienteController::class);
     Route::resource('proveedores', ProveedorController::class);
     Route::resource('productos', ProductoController::class);
     Route::resource('productos.variantes', VarianteProdController::class)->except(['index', 'show'])->shallow();
     Route::resource('categorias', CategoriaController::class)->except(['show', 'create', 'edit']);
 
-    // Rutas de Pedidos (con asistente)
+    // Rutas de Pedidos (con asistente y actualización de estado)
     Route::get('/pedidos/crear/paso-1', [PedidoController::class, 'createStep1'])->name('pedidos.create.step1');
     Route::post('/pedidos/crear/paso-1', [PedidoController::class, 'postStep1'])->name('pedidos.create.step1.post');
     Route::get('/pedidos/crear/paso-2', [PedidoController::class, 'createStep2'])->name('pedidos.create.step2');
@@ -102,9 +71,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/pedidos/carrito/remove', [PedidoController::class, 'removeFromCart'])->name('pedidos.cart.remove');
     Route::get('/pedidos/crear/paso-3', [PedidoController::class, 'createStep3'])->name('pedidos.create.step3');
     Route::resource('pedidos', PedidoController::class)->except(['create']);
-    Route::resource('pedidos', PedidoController::class);
-// --- AÑADE ESTA LÍNEA ---
-Route::put('/pedidos/{pedido}/status', [PedidoController::class, 'updateStatus'])->name('pedidos.updateStatus');
+    Route::put('/pedidos/{pedido}/status', [PedidoController::class, 'updateStatus'])->name('pedidos.updateStatus');
 
     // Rutas de Reportes
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
@@ -112,14 +79,15 @@ Route::put('/pedidos/{pedido}/status', [PedidoController::class, 'updateStatus']
     Route::get('/reportes/exportar/excel', [ReporteController::class, 'exportarExcel'])->name('reportes.exportar.excel');
 
     // --- Rutas Protegidas solo para Super-Admin ---
-    // Corregido: Se usa el middleware 'role:Super-Admin' que es el estándar de Spatie.
+    // Se utiliza el middleware 'role:Super-Admin' de Spatie para proteger estas rutas.
     Route::middleware(['role:Super-Admin'])->group(function () {
         Route::resource('roles', RoleController::class)->except(['show']);
         Route::resource('users', UserController::class)->except(['show']);
         Route::get('/audits', [AuditController::class, 'index'])->name('audits.index');
+        
+        // Ruta de prueba para verificar el rol de Super-Admin
         Route::get('/admin-test', function () {
-        return '<h1>ACCESO CONCEDIDO: La prueba del rol Super-Admin funciono!</h1>';
-    });
+            return '<h1>ACCESO CONCEDIDO: La prueba del rol Super-Admin funcionó correctamente.</h1>';
+        });
     });
 });
-// --- Rutas de Auditoría (para todos los usuarios autenticados) ---
