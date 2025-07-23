@@ -39,27 +39,26 @@ class UserController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
-        // CORREGIDO: Se ajusta la validación y se usa bcrypt()
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'roles' => 'required|array'
-        ]);
+{
+    // CORREGIDO: Se añade la regla 'confirmed' para la contraseña
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:8|confirmed', // Aquí está el cambio
+        'roles' => 'required|array'
+    ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-        ]);
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => bcrypt($request->password),
+    ]);
 
-        $user->assignRole($request->roles);
+    $user->assignRole($request->roles);
 
-        // CORREGIDO: Redirigimos con un mensaje de éxito
-        return redirect()->route('users.index')
-                         ->with('success', '¡Usuario creado exitosamente!');
-    }
+    return redirect()->route('users.index')
+                     ->with('success', '¡Usuario creado exitosamente!');
+}
 
     /**
      * Show the form for editing the specified resource.
