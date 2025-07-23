@@ -22,8 +22,8 @@
                         <div class="form-group flex-grow">
                             <label for="buscador-variantes">Buscar producto para añadir</label>
                             <div wire:ignore>
-                               {{-- MODIFICADO: Añadimos 'x-ref' para que Alpine pueda encontrar este elemento --}}
-                               <select id="buscador-variantes" x-ref="buscador" style="width: 100%;"><option></option></select>
+                                {{-- MODIFICADO: Añadimos 'x-ref' para que Alpine pueda encontrar este elemento --}}
+                                <select id="buscador-variantes" x-ref="buscador" style="width: 100%;"><option></option></select>
                             </div>
                         </div>
                         <div class="form-group">
@@ -81,7 +81,10 @@
                             <select id="esta_cod" name="esta_cod" class="form-control" required>
                                 @foreach($estados as $estado)
                                     <option value="{{ $estado->esta_cod }}" @if($pedido->esta_cod == $estado->esta_cod) selected @endif>
-                                        {{ $estado->esta__detalle }}
+                                        {{-- INICIO DE LA CORRECCIÓN --}}
+                                        {{-- Se corrigió el nombre de la columna de 'esta__detalle' a 'esta_detalle' --}}
+                                        {{ $estado->esta_detalle }}
+                                        {{-- FIN DE LA CORRECCIÓN --}}
                                     </option>
                                 @endforeach
                             </select>
@@ -89,9 +92,9 @@
 
                         <div class="totals-section">
                              <div class="total-line">
-                                <span>Nuevo Subtotal Productos</span>
-                                <strong class="text-lg" x-text="`$${subtotal.toFixed(2)}`"></strong>
-                            </div>
+                                 <span>Nuevo Subtotal Productos</span>
+                                 <strong class="text-lg" x-text="`$${subtotal.toFixed(2)}`"></strong>
+                             </div>
                         </div>
 
                         <div class="action-buttons">
@@ -110,7 +113,6 @@
 </div>
 @endsection
 
-{{-- El CSS no necesita cambios --}}
 @push('styles')
 <style>
 :root { --primary-color: #3b82f6; --primary-dark: #2563eb; --secondary-color: #6b7280; --secondary-dark: #4b5563; --danger-color: #ef4444; --danger-dark: #dc2626; --bg-main: #f9fafb; --bg-card: #ffffff; --bg-subtle: #f3f4f6; --border-color: #e5e7eb; --border-focus: var(--primary-color); --text-primary: #1f2937; --text-secondary: #6b7280; --text-on-primary: #ffffff; --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05); --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); --radius-md: 0.5rem; --transition-fast: all 0.2s ease-in-out; }
@@ -168,7 +170,6 @@
 </style>
 @endpush
 
-{{-- MODIFICADO: Toda la lógica de inicialización y comunicación está ahora dentro de Alpine.js --}}
 @push('scripts')
 <script>
     function gestorPedidosEditar() {
@@ -187,25 +188,19 @@
             productoSeleccionado: null,
 
             // == INICIALIZACIÓN ==
-            // 'init()' es una función especial de Alpine que se ejecuta cuando el componente se carga.
             init() {
-                // Creamos una referencia a 'this' para usarla dentro de los callbacks de jQuery.
                 const component = this;
 
-                // Inicializamos Select2 en el elemento que marcamos con x-ref="buscador".
                 $(this.$refs.buscador).select2({
                     placeholder: 'Buscar por nombre o código de producto...',
                     data: {!! json_encode($variantesParaSelect2) !!},
                     allowClear: true
                 });
 
-                // Creamos el listener de Select2. Ahora está DENTRO de Alpine.
                 $(this.$refs.buscador).on('select2:select', function(e) {
-                    // Llamamos a la función de Alpine directamente.
                     component.seleccionarProducto(e.params.data.datos_completos);
                 });
 
-                // Hacemos lo mismo para el evento de limpiar la selección.
                 $(this.$refs.buscador).on('select2:unselect', function(e) {
                     component.seleccionarProducto(null);
                 });
@@ -219,7 +214,6 @@
                 if (!this.productoSeleccionado) return;
                 this.anadirAlCarrito(this.productoSeleccionado);
                 this.productoSeleccionado = null;
-                // Reseteamos el valor del Select2 usando su API
                 $(this.$refs.buscador).val(null).trigger('change');
             },
             anadirAlCarrito(variante) {

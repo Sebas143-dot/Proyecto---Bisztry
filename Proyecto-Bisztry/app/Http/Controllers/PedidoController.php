@@ -30,15 +30,13 @@ class PedidoController extends Controller
         return view('pedidos.index', compact('pedidos', 'estados'));
     }
 
-public function createStep1(Request $request)
+    public function createStep1(Request $request)
     {
-        // Si no venimos de crear un cliente, limpiamos la sesión.
         if (!$request->has('new_client_id')) {
             session()->forget('pedido');
         }
         
         $clientes = Cliente::orderBy('clie_nombre')->get();
-        // Obtenemos el ID del nuevo cliente desde la URL, si existe.
         $newClientId = $request->query('new_client_id');
 
         return view('pedidos.create-step-1', compact('clientes', 'newClientId'));
@@ -109,7 +107,14 @@ public function createStep1(Request $request)
 
     public function show(Pedido $pedido) {
         $pedido->load('cliente.ciudad', 'estado', 'metodoPago', 'servicioEntrega', 'detalles.variante.producto', 'detalles.variante.talla', 'detalles.variante.color');
-        return view('pedidos.show', compact('pedido'));
+        
+        // --- INICIO DE LA CORRECCIÓN ---
+        // 1. Buscamos todos los estados posibles para llenar el menú desplegable.
+        $estados = EstadoPedido::all();
+        
+        // 2. Pasamos la variable $estados a la vista, además del pedido.
+        return view('pedidos.show', compact('pedido', 'estados'));
+        // --- FIN DE LA CORRECCIÓN ---
     }
 
     /**
@@ -156,7 +161,6 @@ public function createStep1(Request $request)
     }
 
     public function destroy(Pedido $pedido) {
-        // En un sistema real, se preferiría cancelar un pedido y devolver el stock.
         try {
             DB::transaction(function () use ($pedido) {
                 foreach ($pedido->detalles as $detalle) { $detalle->variante->increment('var_stok_actual', $detalle->cantidad); }
