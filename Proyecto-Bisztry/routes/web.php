@@ -102,6 +102,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/pedidos/carrito/remove', [PedidoController::class, 'removeFromCart'])->name('pedidos.cart.remove');
     Route::get('/pedidos/crear/paso-3', [PedidoController::class, 'createStep3'])->name('pedidos.create.step3');
     Route::resource('pedidos', PedidoController::class)->except(['create']);
+    Route::resource('pedidos', PedidoController::class);
+// --- AÑADE ESTA LÍNEA ---
+Route::put('/pedidos/{pedido}/status', [PedidoController::class, 'updateStatus'])->name('pedidos.updateStatus');
 
     // Rutas de Reportes
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');

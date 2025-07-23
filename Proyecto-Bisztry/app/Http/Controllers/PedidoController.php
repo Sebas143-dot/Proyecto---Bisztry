@@ -107,14 +107,19 @@ class PedidoController extends Controller
 
     public function show(Pedido $pedido) {
         $pedido->load('cliente.ciudad', 'estado', 'metodoPago', 'servicioEntrega', 'detalles.variante.producto', 'detalles.variante.talla', 'detalles.variante.color');
-        
-        // --- INICIO DE LA CORRECCIÓN ---
-        // 1. Buscamos todos los estados posibles para llenar el menú desplegable.
-        $estados = EstadoPedido::all();
-        
-        // 2. Pasamos la variable $estados a la vista, además del pedido.
-        return view('pedidos.show', compact('pedido', 'estados'));
-        // --- FIN DE LA CORRECCIÓN ---
+        $estados = EstadoPedido::all(); // <-- ¡LÍNEA AÑADIDA!
+        return view('pedidos.show', compact('pedido', 'estados')); // <-- ¡VARIABLE AÑADIDA!
+    }
+    public function updateStatus(Request $request, Pedido $pedido)
+    {
+        $validated = $request->validate([
+            'esta_cod' => 'required|exists:estados_pedidos,esta_cod',
+        ]);
+
+        $pedido->update(['esta_cod' => $validated['esta_cod']]);
+
+        // Redirigimos a la página principal de pedidos para ver el cambio reflejado.
+        return redirect()->route('pedidos.index')->with('success', 'Estado del pedido actualizado correctamente.');
     }
 
     /**

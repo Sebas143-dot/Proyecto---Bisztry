@@ -85,7 +85,8 @@
                             <label for="esta_cod">Estado Inicial *</label>
                             <select id="esta_cod" name="esta_cod" class="form-control" required>
                                 @foreach($estados as $estado)
-                                <option value="{{ $estado->esta_cod }}">{{ $estado->esta__detalle }}</option>
+                                    {{-- CORRECCIÓN 1: Se cambió 'esta__detalle' por 'esta_detalle' --}}
+                                    <option value="{{ $estado->esta_cod }}">{{ $estado->esta_detalle }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -93,7 +94,8 @@
                             <label for="meto_cod">Método de Pago *</label>
                             <select id="meto_cod" name="meto_cod" class="form-control" required>
                                 @foreach($metodosPago as $metodo)
-                                <option value="{{ $metodo->meto_cod }}">{{ $metodo->medo_detale }}</option>
+                                     {{-- CORRECCIÓN 2: Se cambió 'medo_detale' por 'meto_detalle' (asumiendo este nombre de columna) --}}
+                                    <option value="{{ $metodo->meto_cod }}">{{ $metodo->meto_detalle }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -103,7 +105,7 @@
                                  @foreach($serviciosEntrega as $servicio)
                                  <option value="{{ $servicio->serv_id }}">{{ $servicio->serv_nombre }}</option>
                                  @endforeach
-                            </select>
+                             </select>
                         </div>
                          <div class="form-group full-span">
                             <label for="pedi_costo_envio">Costo de Envío *</label>
@@ -151,9 +153,9 @@
     --primary-dark: #2563eb;       /* Blue-600 */
     --success-color: #22c55e;      /* Green-500 */
     --success-dark: #16a34a;       /* Green-600 */
-    --bg-main: #f9fafb;             /* Gray-50 */
+    --bg-main: #f9fafb;            /* Gray-50 */
     --bg-card: #ffffff;            /* White */
-    --bg-subtle: #f3f4f6;          /* Gray-100 */
+    --bg-subtle: #f3f4f6;           /* Gray-100 */
     --border-color: #e5e7eb;        /* Gray-200 */
     --border-focus: var(--primary-color);
     --text-primary: #1f2937;        /* Gray-800 */
