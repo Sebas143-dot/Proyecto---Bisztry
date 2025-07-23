@@ -20,36 +20,36 @@
     </div>
     <div class="card-body">
         <form method="GET" action="{{ route('pedidos.index') }}" class="flex flex-col sm:flex-row items-center gap-3 mb-4">
-    {{-- Campo de búsqueda --}}
-    <input 
-        type="text" 
-        name="search" 
-        placeholder="Buscar por ID o nombre de cliente..." 
-        value="{{ request('search') }}"
-        class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-    >
+            {{-- Campo de búsqueda --}}
+            <input 
+                type="text" 
+                name="search" 
+                placeholder="Buscar por ID o nombre de cliente..." 
+                value="{{ request('search') }}"
+                class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            >
 
-    {{-- Selector de estado --}}
-    <select 
-        name="estado_filtro" 
-        onchange="this.form.submit()"
-        class="w-full sm:w-52 px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-indigo-500 focus:border-indigo-500"
-    >
-        <option value="todos">Todos los estados</option>
-        @foreach($estados as $estado)
-            <option value="{{ $estado->esta_cod }}" {{ request('estado_filtro') == $estado->esta_cod ? 'selected' : '' }}>
-                {{ $estado->esta__detalle }}
-            </option>
-        @endforeach
-    </select>
+            {{-- Selector de estado --}}
+            <select 
+                name="estado_filtro" 
+                onchange="this.form.submit()"
+                class="w-full sm:w-52 px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-indigo-500 focus:border-indigo-500"
+            >
+                <option value="todos">Todos los estados</option>
+                @foreach($estados as $estado)
+                    <option value="{{ $estado->esta_cod }}" {{ request('estado_filtro') == $estado->esta_cod ? 'selected' : '' }}>
+                        {{-- CORRECCIÓN 1: Se cambió 'esta__detalle' a 'esta_detalle' --}}
+                        {{ $estado->esta_detalle }}
+                    </option>
+                @endforeach
+            </select>
 
-    {{-- Botón Limpiar --}}
-    <a href="{{ route('pedidos.index') }}" 
-       class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300 shadow">
-        <i class="fas fa-times mr-2"></i> Limpiar
-    </a>
-</form>
-
+            {{-- Botón Limpiar --}}
+            <a href="{{ route('pedidos.index') }}" 
+               class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300 shadow">
+                <i class="fas fa-times mr-2"></i> Limpiar
+            </a>
+        </form>
 
         <div class="table-responsive">
             <table class="table">
@@ -80,19 +80,14 @@
                                     case 'CAN': $estadoClass = 'danger'; break;
                                 }
                             @endphp
-                            <span class="badge {{ $estadoClass }}">{{ $pedido->estado->esta__detalle ?? 'Sin estado' }}</span>
+                            {{-- CORRECCIÓN 2: Se cambió 'esta__detalle' a 'esta_detalle' --}}
+                            <span class="badge {{ $estadoClass }}">{{ $pedido->estado->esta_detalle ?? 'Sin estado' }}</span>
                         </td>
-                        {{-- ======================================================= --}}
-                        {{--         INICIO DE LA CORRECCIÓN DEL TOTAL             --}}
-                        {{-- ======================================================= --}}
                         <td class="text-right font-bold">${{ number_format($pedido->pedi_total + $pedido->pedi_costo_envio, 2) }}</td>
-                        {{-- ======================================================= --}}
-                        {{--              FIN DE LA CORRECCIÓN                       --}}
-                        {{-- ======================================================= --}}
                         <td class="text-right">
                             <div class="actions-buttons">
                                 <a href="{{ route('pedidos.show', $pedido) }}" class="btn-icon info" title="Ver Detalles del Pedido"><i class="fas fa-eye"></i></a>
-                                <a href="{{ route('pedidos.edit', $pedido) }}" class="btn-icon warning" title="Editar Estado"><i class="fas fa-edit"></i></a>
+                                <a href="{{ route('pedidos.edit', $pedido) }}" class="btn-icon warning" title="Editar Productos del Pedido"><i class="fas fa-edit"></i></a>
                             </div>
                         </td>
                     </tr>

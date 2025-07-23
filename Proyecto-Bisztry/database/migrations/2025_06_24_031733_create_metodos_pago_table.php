@@ -1,21 +1,26 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+namespace Database\Seeders;
 
-return new class extends Migration
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class MetodoPagoSeeder extends Seeder
 {
-    public function up()
+    public function run(): void
     {
-        Schema::create('metodos_pago', function (Blueprint $table) {
-            $table->string('meto_cod', 3)->primary();
-            $table->string('medo_detale', 25)->nullable();
-        });
-    }
+        $metodos = [
+            // CORRECCIÓN: Se cambió la llave 'meto_detalle' a 'medo_detale' para coincidir con la migración.
+            ['meto_cod' => 'EFE', 'medo_detale' => 'Efectivo'],
+            ['meto_cod' => 'TAR', 'medo_detale' => 'Tarjeta de Crédito/Débito'],
+            ['meto_cod' => 'TRA', 'medo_detale' => 'Transferencia Bancaria'],
+            ['meto_cod' => 'PAY', 'medo_detale' => 'PayPal'],
+        ];
 
-    public function down()
-    {
-        Schema::dropIfExists('metodos_pago');
+        // Usamos upsert para evitar errores si los datos ya existen.
+        // 1er argumento: Los datos.
+        // 2do argumento: La columna única para buscar duplicados.
+        // 3er argumento: Las columnas que se deben actualizar si se encuentra un duplicado.
+        DB::table('metodos_pago')->upsert($metodos, ['meto_cod'], ['medo_detale']);
     }
-};
+}

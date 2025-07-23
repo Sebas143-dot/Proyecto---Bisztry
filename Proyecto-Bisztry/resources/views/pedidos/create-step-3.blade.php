@@ -91,14 +91,14 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="meto_cod">Método de Pago *</label>
-                            <select id="meto_cod" name="meto_cod" class="form-control" required>
-                                @foreach($metodosPago as $metodo)
-                                     {{-- CORRECCIÓN 2: Se cambió 'medo_detale' por 'meto_detalle' (asumiendo este nombre de columna) --}}
-                                    <option value="{{ $metodo->meto_cod }}">{{ $metodo->meto_detalle }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+    <label for="meto_cod">Método de Pago *</label>
+    <select id="meto_cod" name="meto_cod" class="form-control" required>
+        @foreach($metodosPago as $metodo)
+            {{-- CORRECCIÓN: Se cambió '$metodo->meto_detalle' a '$metodo->medo_detale' --}}
+            <option value="{{ $metodo->meto_cod }}">{{ $metodo->medo_detale }}</option>
+        @endforeach
+    </select>
+</div>
                         <div class="form-group full-span">
                              <label for="serv_id">Servicio de Entrega *</label>
                              <select id="serv_id" name="serv_id" class="form-control" required>
