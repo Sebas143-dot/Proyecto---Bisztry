@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="utf-t">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -31,30 +31,74 @@
         <aside class="sidebar">
             <div class="sidebar-header"><div class="logo"><i class="fas fa-shopping-bag"></i><h2>BIZSTRY</h2></div></div>
             <div class="sidebar-content">
+                
+                {{-- ======================================================= --}}
+                {{--        INICIO DE LA SECCIÓN CON PERMISOS               --}}
+                {{-- ======================================================= --}}
                 <nav class="sidebar-nav">
                     <ul>
-                        <li class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><a href="{{ route('dashboard') }}"><i class="fas fa-home fa-fw"></i><span>Dashboard</span></a></li>
-                        <li class="{{ request()->routeIs('pedidos.*') ? 'active' : '' }}"><a href="{{ route('pedidos.index') }}"><i class="fas fa-clipboard-list fa-fw"></i><span>Pedidos</span></a></li>
-                        <li class="{{ request()->routeIs('clientes.*') ? 'active' : '' }}"><a href="{{ route('clientes.index') }}"><i class="fas fa-users fa-fw"></i><span>Clientes</span></a></li>
-                        <li class="{{ request()->routeIs('productos.*') || request()->routeIs('categorias.*') || request()->routeIs('variantes.*') ? 'active' : '' }}"><a href="{{ route('productos.index') }}"><i class="fas fa-box fa-fw"></i><span>Productos</span></a></li>
-                        <li class="{{ request()->routeIs('proveedores.*') ? 'active' : '' }}"><a href="{{ route('proveedores.index') }}"><i class="fas fa-truck fa-fw"></i><span>Proveedores</span></a></li>
+                        {{-- Dashboard (siempre visible) --}}
+                        <li class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                            <a href="{{ route('dashboard') }}"><i class="fas fa-home fa-fw"></i><span>Dashboard</span></a>
+                        </li>
+
+                        {{-- Pedidos (visible si puede crear O gestionar) --}}
+                        @canany(['gestionar-pedidos', 'crear-pedidos'])
+                        <li class="{{ request()->routeIs('pedidos.*') ? 'active' : '' }}">
+                            <a href="{{ route('pedidos.index') }}"><i class="fas fa-clipboard-list fa-fw"></i><span>Pedidos</span></a>
+                        </li>
+                        @endcanany
+
+                        {{-- Clientes --}}
+                        @can('gestionar-clientes')
+                        <li class="{{ request()->routeIs('clientes.*') ? 'active' : '' }}">
+                            <a href="{{ route('clientes.index') }}"><i class="fas fa-users fa-fw"></i><span>Clientes</span></a>
+                        </li>
+                        @endcan
+
+                        {{-- Productos --}}
+                        @can('gestionar-productos')
+                        <li class="{{ request()->routeIs('productos.*') || request()->routeIs('categorias.*') || request()->routeIs('variantes.*') ? 'active' : '' }}">
+                            <a href="{{ route('productos.index') }}"><i class="fas fa-box fa-fw"></i><span>Productos</span></a>
+                        </li>
+                        @endcan
+
+                        {{-- Proveedores --}}
+                        @can('gestionar-proveedores')
+                        <li class="{{ request()->routeIs('proveedores.*') ? 'active' : '' }}">
+                            <a href="{{ route('proveedores.index') }}"><i class="fas fa-truck fa-fw"></i><span>Proveedores</span></a>
+                        </li>
+                        @endcan
                         
-                            <li class="{{ request()->routeIs('reportes.*') ? 'active' : '' }}">
-                                <a href="{{ route('reportes.index') }}">
-                                    <i class="fas fa-chart-bar fa-fw"></i><span>Reportes</span>
-                                </a>
-                            </li>
-                        @role('Super-Admin')
-                        <li class="{{ request()->routeIs('users.*') || request()->routeIs('roles.*') ? 'active' : '' }}"><a href="{{ route('users.index') }}"><i class="fas fa-cog fa-fw"></i><span>Usuarios y Roles</span></a></li>
-                        {{-- ENLACE PARA AUDITORÍA --}}
-                        <li class="{{ request()->routeIs('audits.*') ? 'active' : '' }}">
-                            <a href="{{ route('audits.index') }}">
-                                <i class="fas fa-history fa-fw"></i><span>Auditoría</span> {{-- Usé 'fa-history' para el icono, puedes cambiarlo --}}
+                        {{-- Reportes --}}
+                        @can('ver-reportes')
+                        <li class="{{ request()->routeIs('reportes.*') ? 'active' : '' }}">
+                            <a href="{{ route('reportes.index') }}">
+                                <i class="fas fa-chart-bar fa-fw"></i><span>Reportes</span>
                             </a>
                         </li>
-                        @endrole
+                        @endcan
+
+                        {{-- Usuarios y Roles --}}
+                        @canany(['gestionar-usuarios', 'gestionar-roles'])
+                        <li class="{{ request()->routeIs('users.*') || request()->routeIs('roles.*') ? 'active' : '' }}">
+                            <a href="{{ route('users.index') }}"><i class="fas fa-cog fa-fw"></i><span>Usuarios y Roles</span></a>
+                        </li>
+                        @endcanany
+                        
+                        {{-- Auditoría --}}
+                        @can('view audit logs')
+                        <li class="{{ request()->routeIs('audits.*') ? 'active' : '' }}">
+                            <a href="{{ route('audits.index') }}">
+                                <i class="fas fa-history fa-fw"></i><span>Auditoría</span>
+                            </a>
+                        </li>
+                        @endcan
                     </ul>
                 </nav>
+                {{-- ======================================================= --}}
+                {{--            FIN DE LA SECCIÓN CON PERMISOS               --}}
+                {{-- ======================================================= --}}
 
                 <div class="sidebar-footer">
                     <!-- Botón estático para Cerrar Sesión -->

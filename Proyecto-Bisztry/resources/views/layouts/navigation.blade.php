@@ -15,6 +15,49 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    {{-- Enlaces protegidos por permisos --}}
+                    @canany(['gestionar-pedidos', 'crear-pedidos'])
+                        <x-nav-link :href="route('pedidos.index')" :active="request()->routeIs('pedidos.*')">
+                            {{ __('Pedidos') }}
+                        </x-nav-link>
+                    @endcanany
+
+                    @can('gestionar-clientes')
+                        <x-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.*')">
+                            {{ __('Clientes') }}
+                        </x-nav-link>
+                    @endcan
+
+                    @can('gestionar-productos')
+                        <x-nav-link :href="route('productos.index')" :active="request()->routeIs('productos.*')">
+                            {{ __('Productos') }}
+                        </x-nav-link>
+                    @endcan
+
+                    @can('gestionar-proveedores')
+                        <x-nav-link :href="route('proveedores.index')" :active="request()->routeIs('proveedores.*')">
+                            {{ __('Proveedores') }}
+                        </x-nav-link>
+                    @endcan
+
+                    @can('ver-reportes')
+                        <x-nav-link :href="route('reportes.index')" :active="request()->routeIs('reportes.*')">
+                            {{ __('Reportes') }}
+                        </x-nav-link>
+                    @endcan
+
+                    @canany(['gestionar-usuarios', 'gestionar-roles'])
+                        <x-nav-link :href="route('roles.index')" :active="request()->routeIs('users.*') || request()->routeIs('roles.*')">
+                            {{ __('Usuarios y Roles') }}
+                        </x-nav-link>
+                    @endcanany
+
+                    @can('view audit logs')
+                        <x-nav-link :href="route('audits.index')" :active="request()->routeIs('audits.*')">
+                            {{ __('Auditoría') }}
+                        </x-nav-link>
+                    @endcan
                 </div>
             </div>
 
@@ -70,6 +113,49 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            {{-- Enlaces responsivos protegidos por permisos --}}
+            @canany(['gestionar-pedidos', 'crear-pedidos'])
+                <x-responsive-nav-link :href="route('pedidos.index')" :active="request()->routeIs('pedidos.*')">
+                    {{ __('Pedidos') }}
+                </x-responsive-nav-link>
+            @endcanany
+
+            @can('gestionar-clientes')
+                <x-responsive-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.*')">
+                    {{ __('Clientes') }}
+                </x-responsive-nav-link>
+            @endcan
+
+            @can('gestionar-productos')
+                <x-responsive-nav-link :href="route('productos.index')" :active="request()->routeIs('productos.*')">
+                    {{ __('Productos') }}
+                </x-responsive-nav-link>
+            @endcan
+
+            @can('gestionar-proveedores')
+                <x-responsive-nav-link :href="route('proveedores.index')" :active="request()->routeIs('proveedores.*')">
+                    {{ __('Proveedores') }}
+                </x-responsive-nav-link>
+            @endcan
+
+            @can('ver-reportes')
+                <x-responsive-nav-link :href="route('reportes.index')" :active="request()->routeIs('reportes.*')">
+                    {{ __('Reportes') }}
+                </x-responsive-nav-link>
+            @endcan
+
+            @canany(['gestionar-usuarios', 'gestionar-roles'])
+                <x-responsive-nav-link :href="route('roles.index')" :active="request()->routeIs('users.*') || request()->routeIs('roles.*')">
+                    {{ __('Usuarios y Roles') }}
+                </x-responsive-nav-link>
+            @endcanany
+
+            @can('view audit logs')
+                <x-responsive-nav-link :href="route('audits.index')" :active="request()->routeIs('audits.*')">
+                    {{ __('Auditoría') }}
+                </x-responsive-nav-link>
+            @endcan
         </div>
 
         <!-- Responsive Settings Options -->

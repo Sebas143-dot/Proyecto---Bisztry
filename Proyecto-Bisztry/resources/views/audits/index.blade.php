@@ -4,6 +4,9 @@
 @section('page-description', 'Historial detallado de los cambios y acciones realizadas en el sistema.')
 
 @section('content')
+
+{{-- La vista completa solo se renderiza si el usuario tiene el permiso para ver los logs de auditoría --}}
+@can('view audit logs')
 <div class="card">
     <div class="card-header">
         <div class="header-content">
@@ -132,6 +135,15 @@
         @endif
     </div>
 </div>
+@else
+{{-- Mensaje para usuarios sin permiso --}}
+<div class="card">
+    <div class="card-body text-center p-8">
+        <h3 class="text-lg font-medium">Acceso Denegado</h3>
+        <p class="text-secondary">No tienes los permisos necesarios para ver los registros de auditoría.</p>
+    </div>
+</div>
+@endcan
 
 <style>
 /* === Paleta y Variables Base === */

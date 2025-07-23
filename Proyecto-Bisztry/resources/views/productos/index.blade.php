@@ -11,6 +11,9 @@
             <h3>Todos los Productos</h3>
             <p>Se encontraron {{ $productos->total() }} productos.</p>
         </div>
+        
+        {{-- Los botones de acción en el header solo se muestran si el usuario tiene el permiso --}}
+        @can('gestionar-productos')
         <div class="card-actions">
             <a href="{{ route('categorias.index') }}" class="btn btn-outline">
                 <i class="fas fa-tags"></i> Gestionar Categorías
@@ -19,6 +22,7 @@
                 <i class="fas fa-plus"></i> Nuevo Producto
             </a>
         </div>
+        @endcan
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -30,7 +34,11 @@
                         <th>Categoría</th>
                         <th>Estado</th>
                         <th>Creado en</th>
-                        <th class="text-right">Acciones</th>
+                        
+                        {{-- La columna de "Acciones" solo se muestra si el usuario tiene permiso --}}
+                        @can('gestionar-productos')
+                            <th class="text-right">Acciones</th>
+                        @endcan
                     </tr>
                 </thead>
                 <tbody>
@@ -47,6 +55,9 @@
                             @endif
                         </td>
                         <td>{{ $producto->created_at->format('d/m/Y') }}</td>
+                        
+                        {{-- Los botones de acción solo se muestran si el usuario tiene permiso --}}
+                        @can('gestionar-productos')
                         <td class="text-right">
                             <div class="actions-buttons">
                                 <a href="{{ route('productos.show', $producto) }}" class="btn-icon info" title="Ver Variantes y Detalles">
@@ -64,10 +75,12 @@
                                 </form>
                             </div>
                         </td>
+                        @endcan
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center">Aún no has creado ningún producto.</td>
+                        {{-- Ajustamos el colspan para que la tabla no se descuadre --}}
+                        <td colspan="@can('gestionar-productos') 6 @else 5 @endcan" class="text-center">Aún no has creado ningún producto.</td>
                     </tr>
                     @endforelse
                 </tbody>

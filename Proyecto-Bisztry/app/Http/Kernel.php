@@ -54,20 +54,26 @@ class Kernel extends HttpKernel
      */
     protected $routeMiddleware = [
         'auth' => \App\Http\Middleware\Authenticate::class,
-        'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
         'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
-        'signed' => \App\Http\Middleware\ValidateSignature::class,
+        'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
+        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-'role' => \App\Http\Middleware\DebugRoleMiddleware::class, // Usamos nuestro "micrófono"
-        // En app/Http/Kernel.php, dentro de protected $middlewareAliases
-    'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
-    // Asegúrate de que esta línea esté presente
-    'role.superadmin' => \App\Http\Middleware\IsSuperAdmin::class,
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Se añaden los middlewares del paquete Spatie/Permission.
+        // Laravel ahora sabrá qué hacer cuando encuentre ->middleware('role:...') o ->middleware('permission:...')
+        'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+        'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+        'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        // --- FIN DE LA CORRECCIÓN ---
+        
+        // Tus otros middlewares personalizados
+        'is_super_admin' => \App\Http\Middleware\IsSuperAdmin::class,
+        'debug_role' => \App\Http\Middleware\DebugRoleMiddleware::class,
     ];
 }

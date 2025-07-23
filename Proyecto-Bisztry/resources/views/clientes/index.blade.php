@@ -11,29 +11,33 @@
             <h3>Todos los Clientes</h3>
             <p>Se encontraron {{ $clientes->total() }} clientes.</p>
         </div>
+        
+        {{-- El botón "Nuevo Cliente" solo se muestra si el usuario tiene el permiso --}}
+        @can('gestionar-clientes')
         <div class="card-actions">
             <a href="{{ route('clientes.create') }}" class="btn btn-primary">
                 <i class="fas fa-user-plus"></i>
                 Nuevo Cliente
             </a>
         </div>
+        @endcan
     </div>
     <div class="card-body">
         <div class="filters">
             <form method="GET" action="{{ route('clientes.index') }}" class="flex flex-col sm:flex-row items-center gap-3 mb-4">
-    <input 
-        type="text" 
-        name="search" 
-        placeholder="Buscar por nombre, apellido o email..." 
-        value="{{ request('search') }}"
-        class="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-    >
+                <input 
+                    type="text" 
+                    name="search" 
+                    placeholder="Buscar por nombre, apellido o email..." 
+                    value="{{ request('search') }}"
+                    class="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                >
 
-    <button type="submit"
-        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 shadow">
-        <i class="fas fa-search mr-2"></i> Buscar
-    </button>
-</form>
+                <button type="submit"
+                    class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 shadow">
+                    <i class="fas fa-search mr-2"></i> Buscar
+                </button>
+            </form>
         </div>
 
         <div class="table-responsive">
@@ -45,7 +49,11 @@
                         <th>Email</th>
                         <th>Teléfono</th>
                         <th>Ciudad</th>
-                        <th class="text-right">Acciones</th>
+                        
+                        {{-- La columna de "Acciones" solo se muestra si el usuario tiene permiso --}}
+                        @can('gestionar-clientes')
+                            <th class="text-right">Acciones</th>
+                        @endcan
                     </tr>
                 </thead>
                 <tbody>
@@ -56,6 +64,9 @@
                         <td>{{ $cliente->clie_email }}</td>
                         <td>{{ $cliente->clie_telefono ?: 'N/A' }}</td>
                         <td>{{ $cliente->ciudad->ciud_nombre ?? 'N/A' }}</td>
+                        
+                        {{-- Los botones de acción solo se muestran si el usuario tiene permiso --}}
+                        @can('gestionar-clientes')
                         <td class="text-right">
                             <div class="actions-buttons">
                                 <a href="{{ route('clientes.show', $cliente) }}" class="btn-icon info" title="Ver Detalles">
@@ -73,10 +84,12 @@
                                 </form>
                             </div>
                         </td>
+                        @endcan
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center">No se encontraron clientes.</td>
+                        {{-- Ajustamos el colspan para que coincida si la columna de acciones está o no visible --}}
+                        <td colspan="@can('gestionar-clientes') 6 @else 5 @endcan" class="text-center">No se encontraron clientes.</td>
                     </tr>
                     @endforelse
                 </tbody>

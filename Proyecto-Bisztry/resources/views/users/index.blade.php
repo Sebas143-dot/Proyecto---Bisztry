@@ -3,7 +3,8 @@
 @section('title', 'Gestión de Usuarios')
 @section('page-title', 'Usuarios del Sistema')
 @section('page-description', 'Administra las cuentas de usuario y sus roles.')
-{{-- Bloque para mostrar mensajes de éxito (AHORA CON BOTÓN DE CIERRE) --}}
+
+{{-- Bloque para mostrar mensajes de éxito --}}
 @if (session('success'))
     <div x-data="{ show: true }" 
          x-init="setTimeout(() => show = false, 5000)" 
@@ -32,15 +33,31 @@
     <div class="card-header">
         <div><h3>Listado de Usuarios</h3></div>
         <div class="card-actions">
-            <a href="{{ route('roles.index') }}" class="btn btn-outline"><i class="fas fa-shield-alt"></i> Gestionar Roles</a>
-            <a href="{{ route('users.create') }}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Nuevo Usuario</a>
+            {{-- Botón para gestionar roles, protegido por su permiso --}}
+            @can('gestionar-roles')
+                <a href="{{ route('roles.index') }}" class="btn btn-outline"><i class="fas fa-shield-alt"></i> Gestionar Roles</a>
+            @endcan
+            
+            {{-- Botón para crear usuarios, protegido por su permiso --}}
+            @can('gestionar-usuarios')
+                <a href="{{ route('users.create') }}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Nuevo Usuario</a>
+            @endcan
         </div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table">
                 <thead>
-                    <tr><th>Nombre</th><th>Email</th><th>Rol Asignado</th><th class="text-right">Acciones</th></tr>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol Asignado</th>
+                        
+                        {{-- La columna de "Acciones" solo se muestra si el usuario tiene permiso --}}
+                        @can('gestionar-usuarios')
+                            <th class="text-right">Acciones</th>
+                        @endcan
+                    </tr>
                 </thead>
                 <tbody>
                     @forelse($users as $user)
@@ -54,9 +71,14 @@
                                 <span class="badge">Sin Rol</span>
                             @endforelse
                         </td>
+                        
+                        {{-- Los botones de acción solo se muestran si el usuario tiene permiso --}}
+                        @can('gestionar-usuarios')
                         <td class="text-right">
                             <div class="actions-buttons">
                                 <a href="{{ route('users.edit', $user) }}" class="btn-icon warning" title="Editar Usuario"><i class="fas fa-edit"></i></a>
+                                
+                                {{-- No se puede eliminar al usuario Super-Admin --}}
                                 @if(!($user->hasRole('Super-Admin')))
                                 <form action="{{ route('users.destroy', $user) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar a este usuario?');" style="display:inline;">
                                     @csrf @method('DELETE')
@@ -65,9 +87,13 @@
                                 @endif
                             </div>
                         </td>
+                        @endcan
                     </tr>
                     @empty
-                    <tr><td colspan="4" class="text-center">No hay usuarios registrados.</td></tr>
+                    <tr>
+                        {{-- Ajustamos el colspan para que la tabla no se descuadre --}}
+                        <td colspan="@can('gestionar-usuarios') 4 @else 3 @endcan" class="text-center">No hay usuarios registrados.</td>
+                    </tr>
                     @endforelse
                 </tbody>
             </table>
@@ -77,7 +103,8 @@
 <style>
 .actions-buttons { display: flex; justify-content: flex-end; gap: 0.5rem; }
 .btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; color: white; border: none; cursor: pointer;}
-.btn-icon.warning { background-color: var(--warning-color); }
-.btn-icon.danger { background-color: var(--danger-color); }
+.btn-icon.warning { background-color: #f59e0b; }
+.btn-icon.danger { background-color: #ef4444; }
+.badge.primary { background-color: #e0e7ff; color: #3730a3; }
 </style>
 @endsection

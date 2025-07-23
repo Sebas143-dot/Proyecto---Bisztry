@@ -13,9 +13,6 @@
             <a href="#" class="tab" :class="{ 'tab-active': tab === 'productos' }" @click.prevent="tab = 'productos'"><i class="fas fa-box"></i> Productos</a>
         </div>
         
-        {{-- ======================================================= --}}
-        {{--         INICIO DE LA MEJORA DE FUNCIONALIDAD            --}}
-        {{-- ======================================================= --}}
         <div class="filtros-fecha">
             <form id="filtro-form" method="GET" action="{{ route('reportes.index') }}">
                 <select name="periodo" class="select-filtro" onchange="this.form.submit()">
@@ -24,13 +21,13 @@
                     <option value="este_anio" {{ $periodo == 'este_anio' ? 'selected' : '' }}>Este Año</option>
                 </select>
             </form>
-            {{-- Pasamos el periodo actual como parámetro a las rutas de exportación --}}
-            <a href="{{ route('reportes.exportar.pdf', ['periodo' => $periodo]) }}" class="btn btn-outline" target="_blank"><i class="fas fa-file-pdf"></i> PDF</a>
-            <a href="{{ route('reportes.exportar.excel', ['periodo' => $periodo]) }}" class="btn btn-outline"><i class="fas fa-file-excel"></i> Excel</a>
+            
+            {{-- Los botones de exportación solo se muestran si el usuario tiene el permiso --}}
+            @can('ver-reportes')
+                <a href="{{ route('reportes.exportar.pdf', ['periodo' => $periodo]) }}" class="btn btn-outline" target="_blank"><i class="fas fa-file-pdf"></i> PDF</a>
+                <a href="{{ route('reportes.exportar.excel', ['periodo' => $periodo]) }}" class="btn btn-outline"><i class="fas fa-file-excel"></i> Excel</a>
+            @endcan
         </div>
-        {{-- ======================================================= --}}
-        {{--              FIN DE LA MEJORA                           --}}
-        {{-- ======================================================= --}}
     </div>
 
     {{-- Pestaña "Ventas" --}}
@@ -63,16 +60,16 @@
 
 {{-- Estilos para la página de Reportes --}}
 <style>
-.tabs-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
+.tabs-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; margin-bottom: 1.5rem; }
 .tabs { display: flex; gap: 1.5rem; }
-.tab { display:flex; align-items:center; gap: 0.5rem; padding: 0.75rem 0.25rem; font-weight: 600; color: var(--text-secondary); text-decoration: none; border-bottom: 3px solid transparent; transition: var(--transition-fast); }
-.tab:hover { color: var(--primary-color); }
-.tab.tab-active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+.tab { display:flex; align-items:center; gap: 0.5rem; padding: 0.75rem 0.25rem; font-weight: 600; color: #6b7280; text-decoration: none; border-bottom: 3px solid transparent; transition: all 0.2s; }
+.tab:hover { color: #4f46e5; }
+.tab.tab-active { color: #4f46e5; border-bottom-color: #4f46e5; }
 .filtros-fecha { display: flex; gap: 0.75rem; align-items: center; }
-.select-filtro { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.5rem 0.75rem; background-color: var(--surface-color); }
+.select-filtro { border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.5rem 0.75rem; background-color: white; }
 .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
-.stat-card .stat-title { font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); }
-.stat-card .stat-value { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin-top: 0.5rem; }
+.stat-card .stat-title { font-size: 0.875rem; font-weight: 500; color: #6b7280; }
+.stat-card .stat-value { font-size: 1.75rem; font-weight: 700; color: #111827; margin-top: 0.5rem; }
 .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem; }
 </style>
 @endsection
