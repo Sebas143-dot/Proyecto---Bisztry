@@ -3,6 +3,11 @@
 @section('title', 'Gestión de Usuarios')
 @section('page-title', 'Usuarios del Sistema')
 @section('page-description', 'Administra las cuentas de usuario y sus roles.')
+@if (session('success'))
+    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+        <p>{{ session('success') }}</p>
+    </div>
+@endif
 
 @section('content')
 <div class="card">
