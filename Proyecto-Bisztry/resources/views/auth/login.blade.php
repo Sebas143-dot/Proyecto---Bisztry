@@ -54,11 +54,6 @@
                         <span class="checkbox-text">Recordarme</span>
                     </label>
 
-                    @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}" class="forgot-password">
-                            ¿Olvidaste tu contraseña?
-                        </a>
-                    @endif
                 </div>
 
                 <div class="form-submit">
