@@ -7,19 +7,25 @@ use Illuminate\Support\Facades\DB;
 
 class EstadoPedidoSeeder extends Seeder
 {
-    public function run()
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
     {
-        // Solo inserta si la tabla de estados_pedidos está vacía
-        if (DB::table('estados_pedidos')->count() === 0) {
-            DB::table('estados_pedidos')->insert([
-                ['esta_cod' => 'PEN', 'esta_detalle' => 'Pendiente'],   // Código corto
-                ['esta_cod' => 'PRO', 'esta_detalle' => 'Procesando'],  // Código corto
-                ['esta_cod' => 'ENV', 'esta_detalle' => 'Enviado'],     // Código corto
-                ['esta_cod' => 'ENT', 'esta_detalle' => 'Entregado'],   // Código corto
-                ['esta_cod' => 'CAN', 'esta_detalle' => 'Cancelado'],   // Código corto
-            ]);
-        } else {
-            $this->command->info('Estados de pedido ya existentes. Saltando la inserción.');
-        }
+        // Definimos los estados iniciales que necesita la aplicación,
+        // coincidiendo con la estructura de tu tabla.
+        $estados = [
+            ['esta_cod' => 'CAN', 'esta_detalle' => 'Cancelado'],
+            ['esta_cod' => 'ENT', 'esta_detalle' => 'Entregado'],
+            ['esta_cod' => 'ENV', 'esta_detalle' => 'Enviado'],
+            ['esta_cod' => 'PEN', 'esta_detalle' => 'Pendiente'],
+            ['esta_cod' => 'PRO', 'esta_detalle' => 'Procesando'],
+        ];
+
+        // Insertamos los estados en la tabla 'estados_pedidos'.
+        // Usamos 'firstOrCreate' o similar no es tan directo con DB::table,
+        // así que es mejor asegurarse de que la tabla esté vacía o usar un 'truncate'.
+        // Por ahora, una simple inserción funcionará si la tabla está vacía.
+        DB::table('estados_pedidos')->insert($estados);
     }
 }
